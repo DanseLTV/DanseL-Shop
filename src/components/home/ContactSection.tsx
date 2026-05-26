@@ -3,7 +3,7 @@ import { shopContact } from '../../data/shopContact'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GlassCard } from '../ui/GlassCard'
-import { GradientButton } from '../ui/GradientButton'
+import { OrderButton } from '../auth/OrderButton'
 
 function buildContactCards() {
   const cards = [
@@ -108,9 +108,9 @@ export function ContactSection() {
 
         <ScrollReveal delay={0.25}>
           <div className="mt-10 text-center">
-            <GradientButton to="/order" size="lg">
+            <OrderButton size="lg">
               Place an Order
-            </GradientButton>
+            </OrderButton>
           </div>
         </ScrollReveal>
       </div>

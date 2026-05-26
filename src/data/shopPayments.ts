@@ -37,10 +37,10 @@ export const shopPayments = {
 
   /** Steps na lalabas sa order page */
   steps: [
-    'Piliin ang product at payment method',
-    'Magbayad ng eksaktong amount sa account sa ibaba',
-    'I-upload ang screenshot ng payment proof',
-    'I-message kami sa Telegram para mas mabilis ang delivery',
+    'Sign in to your DANSEL SHOP account',
+    'Select product and payment method (GCash / Maya)',
+    'Pay the exact amount and upload payment proof',
+    'Message @DanseL_VIP on Telegram for faster delivery',
   ],
 
   telegramConfirmNote: `After payment, message us on Telegram ${shopContact.telegramUsername} with your name + product ordered.`,

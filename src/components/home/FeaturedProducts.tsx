@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type { Product } from '../../types'
 import { getFeaturedProducts } from '../../data/products'
+import { useOrderNavigation } from '../../hooks/useOrderNavigation'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GradientButton } from '../ui/GradientButton'
@@ -10,12 +10,12 @@ import { ProductDetailModal } from '../shop/ProductDetailModal'
 
 export function FeaturedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const navigate = useNavigate()
+  const goToOrder = useOrderNavigation()
   const featured = getFeaturedProducts()
 
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
-    navigate(`/order?product=${product.id}`)
+    goToOrder(product.id)
   }
 
   return (

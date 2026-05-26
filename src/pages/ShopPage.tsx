@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { products } from '../data/products'
 import type { Product } from '../types'
+import { useOrderNavigation } from '../hooks/useOrderNavigation'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
@@ -13,7 +14,7 @@ const categories = ['All', ...new Set(products.map((p) => p.category))]
 
 export function ShopPage() {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const goToOrder = useOrderNavigation()
   const initialCategory = searchParams.get('category') || 'All'
 
   const [search, setSearch] = useState('')
@@ -43,7 +44,7 @@ export function ShopPage() {
 
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
-    navigate(`/order?product=${product.id}`)
+    goToOrder(product.id)
   }
 
   return (

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { GradientButton } from '../ui/GradientButton'
+import { OrderButton } from '../auth/OrderButton'
 import { ScrollReveal } from '../ui/ScrollReveal'
 
 export function CTABanner() {
@@ -29,9 +30,9 @@ export function CTABanner() {
                   Shop Now
                   <ArrowRight className="h-5 w-5" />
                 </GradientButton>
-                <GradientButton to="/order" variant="outline" size="lg">
+                <OrderButton variant="outline" size="lg">
                   Place an Order
-                </GradientButton>
+                </OrderButton>
               </div>
             </div>
           </motion.div>

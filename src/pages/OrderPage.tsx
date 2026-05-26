@@ -17,6 +17,8 @@ import { products, getProductById, formatPrice } from '../data/products'
 import type { PaymentMethod } from '../types'
 import { enabledPaymentMethods, shopPayments } from '../data/shopPayments'
 import { shopContact } from '../data/shopContact'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { GradientButton } from '../components/ui/GradientButton'
@@ -26,12 +28,16 @@ import { PaymentInstructions } from '../components/order/PaymentInstructions'
 export function OrderPage() {
   const [searchParams] = useSearchParams()
   const preselectedId = searchParams.get('product') || ''
+  const { user, profile } = useAuth()
+
+  const customerName = profile?.full_name ?? ''
+  const customerEmail = user?.email ?? ''
+  const customerPhone = profile?.phone ?? ''
 
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
     productId: preselectedId,
     paymentMethod: '' as PaymentMethod | '',
     notes: '',
@@ -41,9 +47,7 @@ export function OrderPage() {
   const selectedProduct = form.productId ? getProductById(form.productId) : null
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
@@ -54,8 +58,30 @@ export function OrderPage() {
     setForm((prev) => ({ ...prev, proofFile: file }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitError('')
+    setSubmitting(true)
+
+    if (supabase && user && selectedProduct) {
+      const { error } = await supabase.from('orders').insert({
+        user_id: user.id,
+        product_id: selectedProduct.id,
+        product_name: selectedProduct.name,
+        amount: selectedProduct.price,
+        payment_method: form.paymentMethod,
+        notes: form.notes || null,
+        status: 'pending',
+      })
+
+      if (error) {
+        setSubmitError('Could not save order. Please try again or contact us on Telegram.')
+        setSubmitting(false)
+        return
+      }
+    }
+
+    setSubmitting(false)
     setSubmitted(true)
   }
 
@@ -81,7 +107,7 @@ export function OrderPage() {
           <SectionHeading
             badge="Checkout"
             title="Place Your Order"
-            subtitle="Fill in your details, pay via GCash or Maya, upload proof, then confirm on Telegram for fast delivery."
+            subtitle="Your account details are saved. Select product, pay, upload proof, then confirm on Telegram."
             align="left"
           />
         </ScrollReveal>
@@ -101,7 +127,7 @@ export function OrderPage() {
                 Order Submitted!
               </h3>
               <p className="mt-3 text-white/60">
-                Thank you, {form.name}! We've received your order
+                Thank you, {customerName}! We've received your order
                 {selectedProduct && ` for ${selectedProduct.name}`}. We'll verify
                 your payment and deliver within 15–60 minutes.
               </p>
@@ -132,6 +158,35 @@ export function OrderPage() {
               <ScrollReveal delay={0.05}>
                 <div className="glass-card mb-6 p-5">
                   <div className="mb-3 flex items-center gap-2">
+                    <User className="h-5 w-5 text-accent-violet" />
+                    <h3 className="font-display font-semibold text-white">Ordering as</h3>
+                  </div>
+                  <div className="grid gap-2 text-sm text-white/70 sm:grid-cols-3">
+                    <p className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-white/40" />
+                      {customerName}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-white/40" />
+                      {customerEmail}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-white/40" />
+                      {customerPhone}
+                    </p>
+                  </div>
+                  <p className="mt-3 text-xs text-white/40">
+                    Update details in{' '}
+                    <Link to="/account" className="text-accent-violet hover:underline">
+                      My Account
+                    </Link>
+                  </p>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal delay={0.08}>
+                <div className="glass-card mb-6 p-5">
+                  <div className="mb-3 flex items-center gap-2">
                     <ListOrdered className="h-5 w-5 text-accent-violet" />
                     <h3 className="font-display font-semibold text-white">How to pay</h3>
                   </div>
@@ -150,57 +205,11 @@ export function OrderPage() {
                 onSubmit={handleSubmit}
                 className="glass-card space-y-6 p-6 sm:p-8"
               >
-                <div>
-                  <label htmlFor="name" className={labelClass}>
-                    <User className="mr-1 inline h-4 w-4" />
-                    Full Name *
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Your full name"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="email" className={labelClass}>
-                      <Mail className="mr-1 inline h-4 w-4" />
-                      Email *
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="you@email.com"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className={labelClass}>
-                      <Phone className="mr-1 inline h-4 w-4" />
-                      Phone / Telegram *
-                    </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="text"
-                      required
-                      value={form.phone}
-                      onChange={handleChange}
-                      placeholder="09XX XXX XXXX"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
+                {submitError && (
+                  <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    {submitError}
+                  </p>
+                )}
 
                 <div>
                   <label htmlFor="productId" className={labelClass}>
@@ -317,8 +326,8 @@ export function OrderPage() {
                   {shopContact.telegramUsername}.
                 </div>
 
-                <GradientButton type="submit" className="w-full" size="lg">
-                  Submit Order
+                <GradientButton type="submit" className="w-full" size="lg" disabled={submitting}>
+                  {submitting ? 'Submitting…' : 'Submit Order'}
                 </GradientButton>
               </motion.form>
             </>
