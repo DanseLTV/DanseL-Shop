@@ -9,40 +9,14 @@ import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
 
-interface AdminCheckResult {
-  isAdmin: boolean
-  role: string | null
-  userId: string
-  profileFound: boolean
-  errorMessage?: string
-}
+async function checkIsAdmin(userId: string): Promise<{ isAdmin: boolean; errorMessage?: string }> {
+  if (!supabase) return { isAdmin: false, errorMessage: 'No Supabase client' }
 
-async function checkIsAdmin(userId: string): Promise<AdminCheckResult> {
-  if (!supabase) {
-    return { isAdmin: false, role: null, userId, profileFound: false, errorMessage: 'No Supabase client' }
-  }
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (error) {
-    return {
-      isAdmin: false,
-      role: null,
-      userId,
-      profileFound: false,
-      errorMessage: error.message,
-    }
-  }
-
-  return {
-    isAdmin: data?.role === 'admin',
-    role: data?.role ?? null,
-    userId,
-    profileFound: Boolean(data),
-  }
+  // Avoid selecting directly from `profiles` here (RLS policies can recurse in some setups).
+  // This RPC should run as SECURITY DEFINER and return a boolean.
+  const { data, error } = await supabase.rpc('is_admin_uid', { uid: userId })
+  if (error) return { isAdmin: false, errorMessage: error.message }
+  return { isAdmin: Boolean(data) }
 }
 
 export function AdminLoginPage() {
@@ -77,14 +51,7 @@ export function AdminLoginPage() {
     if (!check.isAdmin) {
       await signOut()
       setLoading(false)
-      const detail = check.profileFound
-        ? `Role found: "${check.role ?? 'null'}" (expected "admin")`
-        : 'No profile row found for this user.'
-      setError(
-        `Access denied. ${detail} · UID: ${check.userId}${
-          check.errorMessage ? ` · ${check.errorMessage}` : ''
-        }`
-      )
+      setError(`Access denied. ${check.errorMessage ? `(${check.errorMessage})` : ''}`)
       return
     }
 
