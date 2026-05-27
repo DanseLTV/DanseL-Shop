@@ -88,6 +88,12 @@ export function Navbar() {
           {user ? (
             <>
               <Link
+                to="/orders"
+                className="rounded-lg px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                Messages
+              </Link>
+              <Link
                 to="/account"
                 className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-accent-violet/40"
               >
@@ -146,6 +152,9 @@ export function Navbar() {
               ))}
               {user ? (
                 <>
+                  <Link to="/orders" className="rounded-lg px-4 py-3 text-sm text-white/80">
+                    My Orders & Messages
+                  </Link>
                   <Link to="/account" className="rounded-lg px-4 py-3 text-sm text-white/80">
                     My Account
                   </Link>

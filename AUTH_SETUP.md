@@ -13,6 +13,7 @@ Login, signup, and admin access use **Supabase** (free tier).
 1. Supabase Dashboard → **SQL Editor** → **New query**
 2. Copy all contents of `supabase/schema.sql` and **Run**
 3. If the project already existed before username login, also run `supabase/schema-username-migration.sql`
+4. For in-app buyer ↔ admin chat, run `supabase/schema-messages.sql`
 
 ## 3. Get API keys
 

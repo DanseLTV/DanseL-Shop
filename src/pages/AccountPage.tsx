@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { User, LogOut, ShoppingBag } from 'lucide-react'
+import { User, LogOut, ShoppingBag, MessageCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -40,7 +40,11 @@ export function AccountPage() {
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
-              <GradientButton onClick={() => goToOrder()}>
+              <GradientButton to="/orders">
+                <MessageCircle className="h-4 w-4" />
+                My Orders & Messages
+              </GradientButton>
+              <GradientButton onClick={() => goToOrder()} variant="outline">
                 <ShoppingBag className="h-4 w-4" />
                 Place New Order
               </GradientButton>

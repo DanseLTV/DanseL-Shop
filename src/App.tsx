@@ -15,6 +15,7 @@ import { SignupPage } from './pages/SignupPage'
 import { AccountPage } from './pages/AccountPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { MyOrdersPage } from './pages/MyOrdersPage'
 
 function App() {
   return (
@@ -45,6 +46,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AccountPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute>
+                    <MyOrdersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders/:orderId"
+                element={
+                  <ProtectedRoute>
+                    <MyOrdersPage />
                   </ProtectedRoute>
                 }
               />

@@ -32,4 +32,19 @@ export interface OrderRecord {
   notes: string | null
   status: 'pending' | 'paid' | 'delivered' | 'cancelled'
   created_at: string
+  customer_last_read_at?: string | null
+  admin_last_read_at?: string | null
+}
+
+export interface OrderMessage {
+  id: string
+  order_id: string
+  sender_id: string
+  sender_role: UserRole
+  body: string
+  created_at: string
+}
+
+export interface OrderWithCustomer extends OrderRecord {
+  profiles?: { username: string } | null
 }

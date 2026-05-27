@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User,
@@ -26,6 +26,7 @@ import { PaymentInstructions } from '../components/order/PaymentInstructions'
 
 export function OrderPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const preselectedId = searchParams.get('product') || ''
   const { user, profile } = useAuth()
 
@@ -60,26 +61,45 @@ export function OrderPage() {
     setSubmitError('')
     setSubmitting(true)
 
-    if (supabase && user && selectedProduct) {
-      const { error } = await supabase.from('orders').insert({
-        user_id: user.id,
-        product_id: selectedProduct.id,
-        product_name: selectedProduct.name,
-        amount: selectedProduct.price,
-        payment_method: form.paymentMethod,
-        notes: form.notes || null,
-        status: 'pending',
-      })
+    let createdOrderId: string | null = null
 
-      if (error) {
-        setSubmitError('Could not save order. Please try again or contact us on Telegram.')
+    if (supabase && user && selectedProduct) {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          product_id: selectedProduct.id,
+          product_name: selectedProduct.name,
+          amount: selectedProduct.price,
+          payment_method: form.paymentMethod,
+          notes: form.notes || null,
+          status: 'pending',
+        })
+        .select('id')
+        .single()
+
+      if (error || !data) {
+        setSubmitError('Could not save order. Please try again.')
         setSubmitting(false)
         return
       }
+
+      createdOrderId = data.id
+
+      await supabase.from('order_messages').insert({
+        order_id: data.id,
+        sender_id: user.id,
+        sender_role: 'customer',
+        body: `New order placed for ${selectedProduct.name} via ${form.paymentMethod}.${form.notes ? ` Notes: ${form.notes}` : ''}`,
+      })
     }
 
     setSubmitting(false)
     setSubmitted(true)
+
+    if (createdOrderId) {
+      setTimeout(() => navigate(`/orders/${createdOrderId}`), 2500)
+    }
   }
 
   const inputClass =
@@ -104,7 +124,7 @@ export function OrderPage() {
           <SectionHeading
             badge="Checkout"
             title="Place Your Order"
-            subtitle="Your account details are saved. Select product, pay, upload proof, then confirm on Telegram."
+            subtitle="Select product, pay, upload proof, then message admin here on the site."
             align="left"
           />
         </ScrollReveal>
@@ -129,23 +149,15 @@ export function OrderPage() {
                 your payment and deliver within 15–60 minutes.
               </p>
               <p className="mt-4 text-sm text-white/50">
-                For faster processing, message us on Telegram{' '}
-                <a
-                  href={shopContact.telegramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-accent-cyan hover:underline"
-                >
-                  {shopContact.telegramUsername}
-                </a>{' '}
-                with your name and product.
+                Redirecting you to <strong className="text-white">My Orders</strong> to chat
+                with admin…
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <GradientButton href={shopContact.telegramUrl}>
+                <GradientButton to="/orders">
                   <Send className="h-4 w-4" />
-                  Open Telegram
+                  Open Messages
                 </GradientButton>
-                <GradientButton to="/shop" variant="outline">
+                <GradientButton to="/" variant="outline">
                   Continue Shopping
                 </GradientButton>
               </div>
@@ -315,8 +327,7 @@ export function OrderPage() {
                   <Link to="/policies" className="text-accent-violet hover:underline">
                     Terms & Policies
                   </Link>
-                  . Need help? Email {shopContact.email} or Telegram{' '}
-                  {shopContact.telegramUsername}.
+                  .                   After submitting, message admin in My Orders. Email {shopContact.email} for urgent help.
                 </div>
 
                 <GradientButton type="submit" className="w-full" size="lg" disabled={submitting}>
