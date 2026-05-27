@@ -21,16 +21,14 @@ export function AdminRoute({ children }: AdminRouteProps) {
     return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/" replace />
+  if (!profile) {
+    // Profile is still loading or the request failed silently.
+    // Send admin back to the admin login screen instead of an indefinite spinner.
+    return <Navigate to="/admin/login" replace />
   }
 
-  if (!profile) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 text-center text-white/60">
-        Loading admin profile…
-      </div>
-    )
+  if (!isAdmin) {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

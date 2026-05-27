@@ -23,52 +23,65 @@ export function AdminDashboardPage() {
   const [orders, setOrders] = useState<OrderWithCustomer[]>([])
   const [customerCount, setCustomerCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [lastCustomerMessageAt, setLastCustomerMessageAt] = useState<
     Record<string, string>
   >({})
 
   const loadData = async () => {
-    if (!supabase) return
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
+    setLoadError('')
 
-    const [ordersRes, profilesRes] = await Promise.all([
-      supabase
-        .from('orders')
-        .select('*, profiles(username)')
-        .order('created_at', { ascending: false })
-        .limit(100),
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'customer'),
-    ])
+    try {
+      const [ordersRes, profilesRes] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('*, profiles(username)')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'customer'),
+      ])
 
-    const list = (ordersRes.data as OrderWithCustomer[]) ?? []
-    setOrders(list)
-    if (profilesRes.count !== null) setCustomerCount(profilesRes.count)
-
-    if (list.length > 0) {
-      const ids = list.map((o) => o.id)
-      const { data: msgs } = await supabase
-        .from('order_messages')
-        .select('order_id, created_at')
-        .in('order_id', ids)
-        .eq('sender_role', 'customer')
-        .order('created_at', { ascending: false })
-
-      const map: Record<string, string> = {}
-      for (const m of msgs ?? []) {
-        if (!map[m.order_id]) map[m.order_id] = m.created_at
+      if (ordersRes.error) {
+        setLoadError(ordersRes.error.message)
       }
-      setLastCustomerMessageAt(map)
-    }
 
-    if (!selectedOrderId && list[0]) {
-      setSelectedOrderId(list[0].id)
-    }
+      const list = (ordersRes.data as OrderWithCustomer[]) ?? []
+      setOrders(list)
+      if (profilesRes.count !== null) setCustomerCount(profilesRes.count)
 
-    setLoading(false)
+      if (list.length > 0) {
+        const ids = list.map((o) => o.id)
+        const { data: msgs } = await supabase
+          .from('order_messages')
+          .select('order_id, created_at')
+          .in('order_id', ids)
+          .eq('sender_role', 'customer')
+          .order('created_at', { ascending: false })
+
+        const map: Record<string, string> = {}
+        for (const m of msgs ?? []) {
+          if (!map[m.order_id]) map[m.order_id] = m.created_at
+        }
+        setLastCustomerMessageAt(map)
+      }
+
+      if (!selectedOrderId && list[0]) {
+        setSelectedOrderId(list[0].id)
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load orders.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -132,6 +145,12 @@ export function AdminDashboardPage() {
             </ScrollReveal>
           ))}
         </div>
+
+        {loadError && (
+          <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            Could not load orders: {loadError}
+          </p>
+        )}
 
         {loading ? (
           <p className="text-white/50">Loading…</p>

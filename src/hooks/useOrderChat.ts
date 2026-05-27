@@ -18,29 +18,38 @@ export function useOrderChat(orderId: string | null, viewerRole: UserRole) {
     }
 
     setLoading(true)
-    const { data, error: fetchError } = await supabase
-      .from('order_messages')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('created_at', { ascending: true })
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('order_messages')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true })
 
-    if (fetchError) {
-      setError('Could not load messages.')
-    } else {
-      setMessages((data as OrderMessage[]) ?? [])
-      setError('')
+      if (fetchError) {
+        setError(fetchError.message || 'Could not load messages.')
+      } else {
+        setMessages((data as OrderMessage[]) ?? [])
+        setError('')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load messages.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [orderId])
 
   const markRead = useCallback(async () => {
     if (!supabase || !orderId) return
     const field =
       viewerRole === 'admin' ? 'admin_last_read_at' : 'customer_last_read_at'
-    await supabase
-      .from('orders')
-      .update({ [field]: new Date().toISOString() })
-      .eq('id', orderId)
+    try {
+      await supabase
+        .from('orders')
+        .update({ [field]: new Date().toISOString() })
+        .eq('id', orderId)
+    } catch (err) {
+      console.warn('markRead failed', err)
+    }
   }, [orderId, viewerRole])
 
   useEffect(() => {

@@ -25,38 +25,53 @@ export function MyOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [lastAdminMessageAt, setLastAdminMessageAt] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const selectedId = paramOrderId ?? orders[0]?.id ?? null
 
   const loadOrders = async () => {
-    if (!supabase || !user) return
+    if (!supabase || !user) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
+    setLoadError('')
 
-    const { data: ordersData } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    const list = (ordersData as OrderRecord[]) ?? []
-    setOrders(list)
-
-    if (list.length > 0) {
-      const ids = list.map((o) => o.id)
-      const { data: msgs } = await supabase
-        .from('order_messages')
-        .select('order_id, created_at, sender_role')
-        .in('order_id', ids)
-        .eq('sender_role', 'admin')
+    try {
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      const map: Record<string, string> = {}
-      for (const m of msgs ?? []) {
-        if (!map[m.order_id]) map[m.order_id] = m.created_at
+      if (ordersError) {
+        setLoadError(ordersError.message)
+        setOrders([])
+        return
       }
-      setLastAdminMessageAt(map)
-    }
 
-    setLoading(false)
+      const list = (ordersData as OrderRecord[]) ?? []
+      setOrders(list)
+
+      if (list.length > 0) {
+        const ids = list.map((o) => o.id)
+        const { data: msgs } = await supabase
+          .from('order_messages')
+          .select('order_id, created_at, sender_role')
+          .in('order_id', ids)
+          .eq('sender_role', 'admin')
+          .order('created_at', { ascending: false })
+
+        const map: Record<string, string> = {}
+        for (const m of msgs ?? []) {
+          if (!map[m.order_id]) map[m.order_id] = m.created_at
+        }
+        setLastAdminMessageAt(map)
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load orders.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -95,6 +110,12 @@ export function MyOrdersPage() {
             align="left"
           />
         </ScrollReveal>
+
+        {loadError && (
+          <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            Could not load orders: {loadError}
+          </p>
+        )}
 
         {loading ? (
           <p className="text-white/50">Loading…</p>

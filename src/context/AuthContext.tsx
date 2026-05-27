@@ -31,6 +31,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+const PROFILE_FETCH_TIMEOUT_MS = 6000
 
 function mapProfile(row: Record<string, unknown>): UserProfile {
   const username =
@@ -48,16 +49,47 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
   }
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      () => {
+        clearTimeout(timer)
+        resolve(fallback)
+      }
+    )
+  })
+}
+
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   if (!supabase) return null
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, username, email, full_name, phone, role, created_at')
-    .eq('id', userId)
-    .single()
+  try {
+    const query = supabase
+      .from('profiles')
+      .select('id, username, email, full_name, phone, role, created_at')
+      .eq('id', userId)
+      .maybeSingle()
 
-  if (error || !data) return null
-  return mapProfile(data as Record<string, unknown>)
+    const result = await withTimeout(
+      Promise.resolve(query) as Promise<{ data: unknown; error: unknown }>,
+      PROFILE_FETCH_TIMEOUT_MS,
+      { data: null, error: { message: 'Profile fetch timed out' } }
+    )
+
+    const { data, error } = result as { data: unknown; error: unknown }
+    if (error || !data) {
+      if (error) console.warn('fetchProfile error', error)
+      return null
+    }
+    return mapProfile(data as Record<string, unknown>)
+  } catch (err) {
+    console.warn('fetchProfile threw', err)
+    return null
+  }
 }
 
 async function resolveLoginEmail(identifier: string): Promise<string | null> {
@@ -69,12 +101,16 @@ async function resolveLoginEmail(identifier: string): Promise<string | null> {
     return trimmed.toLowerCase()
   }
 
-  const { data, error } = await supabase.rpc('get_login_email', {
-    identifier: trimmed,
-  })
+  try {
+    const { data, error } = await supabase.rpc('get_login_email', {
+      identifier: trimmed,
+    })
 
-  if (error || !data) return null
-  return data as string
+    if (error || !data) return null
+    return data as string
+  } catch {
+    return null
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -97,28 +133,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile)
+    let cancelled = false
+    // Hard safety: never let loading stay true forever.
+    const safety = setTimeout(() => {
+      if (!cancelled) setLoading(false)
+    }, 8000)
+
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase!.auth.getSession()
+        if (cancelled) return
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          const p = await fetchProfile(session.user.id)
+          if (!cancelled) setProfile(p)
+        }
+      } catch (err) {
+        console.warn('Auth init failed', err)
+      } finally {
+        if (!cancelled) {
+          clearTimeout(safety)
+          setLoading(false)
+        }
       }
-      setLoading(false)
-    })
+    }
+    init()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (cancelled) return
       setUser(session?.user ?? null)
       if (session?.user) {
         const p = await fetchProfile(session.user.id)
-        setProfile(p)
+        if (!cancelled) setProfile(p)
       } else {
         setProfile(null)
       }
-      setLoading(false)
+      if (!cancelled) {
+        clearTimeout(safety)
+        setLoading(false)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      clearTimeout(safety)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signUp = async (email: string, password: string, username: string) => {
@@ -133,14 +195,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    const { data: taken } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', normalized)
-      .maybeSingle()
+    try {
+      const { data: taken } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', normalized)
+        .maybeSingle()
 
-    if (taken) {
-      return { error: 'Username is already taken' }
+      if (taken) {
+        return { error: 'Username is already taken' }
+      }
+    } catch (err) {
+      console.warn('Username check failed (continuing signup)', err)
     }
 
     const { error } = await supabase.auth.signUp({
