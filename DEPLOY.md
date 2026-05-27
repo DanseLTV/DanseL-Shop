@@ -17,9 +17,16 @@
 
 Your site will get a URL like `https://dansel-shop.vercel.app`
 
-### Custom domain (optional)
+### Custom domain — danselshop.site
 
-Vercel → Project → **Settings** → **Domains** → add your domain.
+Full step-by-step: **[DOMAIN_SETUP.md](./DOMAIN_SETUP.md)**
+
+Short version:
+
+1. Vercel → Project → **Settings** → **Domains** → add `danselshop.site` and `www.danselshop.site`
+2. At your domain registrar DNS: **A** `@` → `76.76.21.21`, **CNAME** `www` → `cname.vercel-dns.com`
+3. Wait until Vercel shows **Valid Configuration**
+4. Supabase → **Authentication** → **URL Configuration** → Site URL `https://danselshop.site` + redirect URLs for the new domain
 
 ## Push to GitHub (first time)
 

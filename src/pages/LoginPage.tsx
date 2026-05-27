@@ -16,7 +16,7 @@ export function LoginPage() {
   const { signIn, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/shop'
+  const redirect = searchParams.get('redirect') || '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,7 +45,9 @@ export function LoginPage() {
             </span>
             <h1 className="font-display text-3xl font-bold text-white">Sign In</h1>
             <p className="mt-2 text-sm text-white/50">
-              Use your username or email to sign in
+              {searchParams.get('redirect')?.includes('/order')
+                ? 'Sign in to complete your order'
+                : 'Use your username or email to sign in'}
             </p>
           </div>
 
@@ -104,7 +106,7 @@ export function LoginPage() {
             <p className="text-center text-sm text-white/50">
               No account yet?{' '}
               <Link
-                to={`/signup${redirect !== '/shop' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`}
+                to={`/signup${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`}
                 className="font-medium text-accent-violet hover:text-accent-cyan"
               >
                 Create account

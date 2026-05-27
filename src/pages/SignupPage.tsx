@@ -23,7 +23,7 @@ export function SignupPage() {
   const { signUp, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/shop'
+  const redirect = searchParams.get('redirect') || '/'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))

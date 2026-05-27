@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ShoppingBag, User, LogOut, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Shop', to: '/shop' },
-  { label: 'Reviews', to: '/#reviews' },
-  { label: 'FAQ', to: '/#faq' },
+  { label: 'Shop', to: '/' },
+  { label: 'About', to: '/home' },
+  { label: 'Reviews', to: '/home#reviews' },
+  { label: 'FAQ', to: '/home#faq' },
   { label: 'Policies', to: '/policies' },
-  { label: 'Contact', to: '/#contact' },
+  { label: 'Contact', to: '/home#contact' },
 ]
 
 export function Navbar() {
@@ -30,9 +30,9 @@ export function Navbar() {
   }, [location.pathname])
 
   const handleHashLink = (to: string) => {
-    if (to.startsWith('/#')) {
-      const id = to.replace('/#', '')
-      if (location.pathname === '/') {
+    if (to.includes('#')) {
+      const id = to.split('#')[1]
+      if (location.pathname === '/home') {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
       }
     }
@@ -61,7 +61,7 @@ export function Navbar() {
 
         <div className="hidden items-center gap-1 lg:flex">
           {navLinks.map((link) =>
-            link.to.startsWith('/#') ? (
+            link.to.includes('#') ? (
               <Link
                 key={link.to}
                 to={link.to}
@@ -112,23 +112,7 @@ export function Navbar() {
                 <LogOut className="h-4 w-4" />
               </button>
             </>
-          ) : (
-            <>
-              <Link to="/login" className="btn-outline px-4 py-2 text-sm">
-                Sign In
-              </Link>
-              <Link to="/signup" className="btn-glow px-4 py-2 text-sm">
-                Sign Up
-              </Link>
-            </>
-          )}
-          <Link
-            to="/shop"
-            className="btn-glow inline-flex items-center gap-2 px-4 py-2 text-sm"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Shop
-          </Link>
+          ) : null}
         </div>
 
         <button
@@ -178,23 +162,7 @@ export function Navbar() {
                     Sign Out
                   </button>
                 </>
-              ) : (
-                <>
-                  <Link to="/login" className="rounded-lg px-4 py-3 text-sm text-white/80">
-                    Sign In
-                  </Link>
-                  <Link to="/signup" className="btn-glow mt-1 py-3 text-center text-sm">
-                    Sign Up
-                  </Link>
-                </>
-              )}
-              <Link
-                to="/shop"
-                className="btn-glow mt-2 flex items-center justify-center gap-2 py-3 text-sm"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Shop Now
-              </Link>
+              ) : null}
             </div>
           </motion.div>
         )}

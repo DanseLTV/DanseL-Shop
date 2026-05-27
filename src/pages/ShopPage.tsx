@@ -54,9 +54,9 @@ export function ShopPage() {
       <div className="relative mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <ScrollReveal>
           <SectionHeading
-            badge="Shop"
-            title="Premium Digital Accounts"
-            subtitle="Browse our full catalog. Filter by category, search by name, and order in seconds."
+            badge="DANSEL SHOP"
+            title="Browse & Order"
+            subtitle="Pick a product below. Sign in only when you’re ready to checkout."
           />
         </ScrollReveal>
 
