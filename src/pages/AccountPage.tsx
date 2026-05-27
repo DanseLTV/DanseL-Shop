@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { User, Mail, Phone, LogOut, ShoppingBag } from 'lucide-react'
+import { User, LogOut, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -37,17 +37,6 @@ export function AccountPage() {
                 </p>
                 <p className="text-sm text-white/50">{user?.email}</p>
               </div>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <p className="flex items-center gap-2 text-white/70">
-                <Mail className="h-4 w-4 text-accent-violet" />
-                {user?.email}
-              </p>
-              <p className="flex items-center gap-2 text-white/70">
-                <Phone className="h-4 w-4 text-accent-violet" />
-                {profile?.phone || '—'}
-              </p>
             </div>
 
             <div className="flex flex-col gap-3 pt-4">

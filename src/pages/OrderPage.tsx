@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   User,
   Mail,
-  Phone,
   Package,
   CreditCard,
   Upload,
@@ -32,8 +31,6 @@ export function OrderPage() {
 
   const customerName = profile?.full_name ?? ''
   const customerEmail = user?.email ?? ''
-  const customerPhone = profile?.phone ?? ''
-
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -161,7 +158,7 @@ export function OrderPage() {
                     <User className="h-5 w-5 text-accent-violet" />
                     <h3 className="font-display font-semibold text-white">Ordering as</h3>
                   </div>
-                  <div className="grid gap-2 text-sm text-white/70 sm:grid-cols-3">
+                  <div className="grid gap-2 text-sm text-white/70 sm:grid-cols-2">
                     <p className="flex items-center gap-2">
                       <User className="h-4 w-4 text-white/40" />
                       {customerName}
@@ -169,10 +166,6 @@ export function OrderPage() {
                     <p className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-white/40" />
                       {customerEmail}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-white/40" />
-                      {customerPhone}
                     </p>
                   </div>
                   <p className="mt-3 text-xs text-white/40">

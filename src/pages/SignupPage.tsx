@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, Phone, UserPlus } from 'lucide-react'
+import { Mail, Lock, User, UserPlus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -12,7 +12,6 @@ export function SignupPage() {
   const [form, setForm] = useState({
     fullName: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
   })
@@ -43,12 +42,7 @@ export function SignupPage() {
     }
 
     setLoading(true)
-    const { error: err } = await signUp(
-      form.email,
-      form.password,
-      form.fullName,
-      form.phone
-    )
+    const { error: err } = await signUp(form.email, form.password, form.fullName)
     setLoading(false)
 
     if (err) {
@@ -132,22 +126,6 @@ export function SignupPage() {
                   onChange={handleChange}
                   className={inputClass}
                   placeholder="you@email.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="mb-2 block text-sm font-medium text-white/80">
-                  <Phone className="mr-1 inline h-4 w-4" />
-                  Phone / Telegram
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  required
-                  value={form.phone}
-                  onChange={handleChange}
-                  className={inputClass}
-                  placeholder="09XX XXX XXXX"
                 />
               </div>
 

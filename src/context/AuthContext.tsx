@@ -22,8 +22,7 @@ interface AuthContextValue {
   signUp: (
     email: string,
     password: string,
-    fullName: string,
-    phone: string
+    fullName: string
   ) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -88,12 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (
-    email: string,
-    password: string,
-    fullName: string,
-    phone: string
-  ) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     if (!supabase) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
     }
@@ -102,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { full_name: fullName, phone },
+        data: { full_name: fullName, phone: '' },
       },
     })
 
