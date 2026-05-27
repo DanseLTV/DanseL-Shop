@@ -1,19 +1,15 @@
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useOrderFlow } from '../context/OrderFlowContext'
+import type { Product } from '../types'
 
-/** Navigate to order page, or login first if not authenticated */
+/** Start checkout — shows sign-in prompt for guests, else goes to order page */
 export function useOrderNavigation() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const { startOrder } = useOrderFlow()
 
-  return (productId?: string) => {
-    const orderPath = productId ? `/order?product=${productId}` : '/order'
-
-    if (!user) {
-      navigate(`/login?redirect=${encodeURIComponent(orderPath)}`)
-      return
-    }
-
-    navigate(orderPath)
+  return (productId?: string, product?: Pick<Product, 'name' | 'price'>) => {
+    startOrder({
+      productId,
+      productName: product?.name,
+      productPrice: product?.price,
+    })
   }
 }

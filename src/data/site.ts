@@ -34,22 +34,22 @@ export const whyChooseUs = [
 export const orderSteps = [
   {
     step: '01',
-    title: 'Create Account',
-    description: 'Sign up for free — your details are saved for faster checkout.',
+    title: 'Browse & Choose',
+    description: 'Pick a product from the shop. No sign-in needed while browsing.',
   },
   {
     step: '02',
-    title: 'Choose Your Product',
-    description: 'Browse our shop and select the premium account you need.',
+    title: 'Sign In to Order',
+    description: 'Tap Order — sign in or create a free account, then continue checkout.',
   },
   {
     step: '03',
     title: 'Pay & Upload Proof',
-    description: 'Pay via GCash or Maya, then upload your payment screenshot.',
+    description: 'Pay via GCash or Maya, then upload your payment screenshot on the order page.',
   },
   {
     step: '04',
     title: 'Receive Access',
-    description: 'Confirm on Telegram and get your account within minutes.',
+    description: 'Message us on Telegram with your order details and get access within minutes.',
   },
 ]

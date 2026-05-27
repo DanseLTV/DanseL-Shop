@@ -9,7 +9,7 @@ interface OrderButtonProps {
   children: React.ReactNode
 }
 
-/** Order CTA — redirects to login if not signed in */
+/** Order CTA — shows sign-in prompt for guests, else goes to checkout */
 export function OrderButton({
   productId,
   variant = 'primary',

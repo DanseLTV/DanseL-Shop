@@ -93,7 +93,7 @@ export function OrderPage() {
 
       <div className="relative mx-auto max-w-2xl px-4 pb-20 sm:px-6 lg:px-8">
         <Link
-          to="/shop"
+          to="/"
           className="mb-6 inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-accent-violet"
         >
           <ArrowLeft className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { OrderFlowProvider } from './context/OrderFlowContext'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { ScrollToTop } from './components/layout/ScrollToTop'
@@ -19,11 +20,12 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <ScrollToTop />
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
+        <OrderFlowProvider>
+          <ScrollToTop />
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
               <Route path="/" element={<ShopPage />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/home" element={<HomePage />} />
@@ -55,10 +57,11 @@ function App() {
                   </AdminRoute>
                 }
               />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </OrderFlowProvider>
       </BrowserRouter>
     </AuthProvider>
   )

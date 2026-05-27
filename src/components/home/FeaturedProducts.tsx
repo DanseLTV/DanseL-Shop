@@ -15,7 +15,7 @@ export function FeaturedProducts() {
 
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
-    goToOrder(product.id)
+    goToOrder(product.id, product)
   }
 
   return (

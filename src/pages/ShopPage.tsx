@@ -9,6 +9,7 @@ import { SectionHeading } from '../components/ui/SectionHeading'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ProductCard } from '../components/shop/ProductCard'
 import { ProductDetailModal } from '../components/shop/ProductDetailModal'
+import { OrderGuide } from '../components/shop/OrderGuide'
 
 const categories = ['All', ...new Set(products.map((p) => p.category))]
 
@@ -44,7 +45,7 @@ export function ShopPage() {
 
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
-    goToOrder(product.id)
+    goToOrder(product.id, product)
   }
 
   return (
@@ -58,6 +59,10 @@ export function ShopPage() {
             title="Browse & Order"
             subtitle="Pick a product below. Sign in only when you’re ready to checkout."
           />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.08}>
+          <OrderGuide />
         </ScrollReveal>
 
         <ScrollReveal delay={0.1}>
