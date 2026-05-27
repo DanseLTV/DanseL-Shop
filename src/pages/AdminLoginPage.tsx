@@ -9,14 +9,40 @@ import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
 
-async function checkIsAdmin(userId: string): Promise<boolean> {
-  if (!supabase) return false
-  const { data } = await supabase
+interface AdminCheckResult {
+  isAdmin: boolean
+  role: string | null
+  userId: string
+  profileFound: boolean
+  errorMessage?: string
+}
+
+async function checkIsAdmin(userId: string): Promise<AdminCheckResult> {
+  if (!supabase) {
+    return { isAdmin: false, role: null, userId, profileFound: false, errorMessage: 'No Supabase client' }
+  }
+  const { data, error } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', userId)
-    .single()
-  return data?.role === 'admin'
+    .maybeSingle()
+
+  if (error) {
+    return {
+      isAdmin: false,
+      role: null,
+      userId,
+      profileFound: false,
+      errorMessage: error.message,
+    }
+  }
+
+  return {
+    isAdmin: data?.role === 'admin',
+    role: data?.role ?? null,
+    userId,
+    profileFound: Boolean(data),
+  }
 }
 
 export function AdminLoginPage() {
@@ -40,10 +66,25 @@ export function AdminLoginPage() {
     }
 
     const { data: { user } } = await supabase!.auth.getUser()
-    if (!user || !(await checkIsAdmin(user.id))) {
+    if (!user) {
       await signOut()
       setLoading(false)
-      setError('Access denied. This account is not an admin.')
+      setError('Could not get user. Please try again.')
+      return
+    }
+
+    const check = await checkIsAdmin(user.id)
+    if (!check.isAdmin) {
+      await signOut()
+      setLoading(false)
+      const detail = check.profileFound
+        ? `Role found: "${check.role ?? 'null'}" (expected "admin")`
+        : 'No profile row found for this user.'
+      setError(
+        `Access denied. ${detail} · UID: ${check.userId}${
+          check.errorMessage ? ` · ${check.errorMessage}` : ''
+        }`
+      )
       return
     }
 
