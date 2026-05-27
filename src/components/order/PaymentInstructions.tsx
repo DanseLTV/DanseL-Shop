@@ -1,8 +1,7 @@
-import { Wallet, Copy, Check, Send } from 'lucide-react'
+import { Wallet, Copy, Check } from 'lucide-react'
 import { useState } from 'react'
 import type { PaymentMethod } from '../../types'
 import { getPaymentDetails, shopPayments } from '../../data/shopPayments'
-import { shopContact } from '../../data/shopContact'
 import { formatPrice } from '../../data/products'
 
 interface PaymentInstructionsProps {
@@ -20,7 +19,7 @@ export function PaymentInstructions({
   const details = getPaymentDetails(method)
 
   const copyText = async (text: string, key: string) => {
-    if (!text || text.includes('Message')) return
+    if (!text) return
     try {
       await navigator.clipboard.writeText(text)
       setCopied(key)
@@ -50,6 +49,21 @@ export function PaymentInstructions({
           </p>
           {productName && (
             <p className="mt-1 text-sm text-white/50">For: {productName}</p>
+          )}
+        </div>
+      )}
+
+      {details.qrImage && (
+        <div className="mb-4 flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white p-4">
+          <img
+            src={details.qrImage}
+            alt={`${details.title} QR Code`}
+            className="h-56 w-56 rounded-lg object-contain"
+          />
+          {details.qrCaption && (
+            <p className="text-center text-xs font-medium text-midnight-900">
+              {details.qrCaption}
+            </p>
           )}
         </div>
       )}
@@ -103,17 +117,9 @@ export function PaymentInstructions({
         </button>
       )}
 
-      <a
-        href={shopContact.telegramUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-accent-violet/20 to-accent-cyan/20 py-2.5 text-sm font-medium text-accent-cyan transition-colors hover:text-white"
-      >
-        <Send className="h-4 w-4" />
-        Confirm on Telegram {shopContact.telegramUsername}
-      </a>
-
-      <p className="mt-3 text-xs text-white/40">{shopPayments.telegramConfirmNote}</p>
+      <p className="mt-4 text-xs text-white/40">
+        After paying, upload your payment proof below. Admin will reply on the in-site chat once your order is submitted.
+      </p>
     </div>
   )
 }

@@ -15,7 +15,6 @@ import {
 import { products, getProductById, formatPrice } from '../data/products'
 import type { PaymentMethod } from '../types'
 import { enabledPaymentMethods, shopPayments } from '../data/shopPayments'
-import { shopContact } from '../data/shopContact'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -35,9 +34,13 @@ export function OrderPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const defaultMethod: PaymentMethod | '' = enabledPaymentMethods.includes(shopPayments.defaultMethod)
+    ? shopPayments.defaultMethod
+    : enabledPaymentMethods[0] ?? ''
+
   const [form, setForm] = useState({
     productId: preselectedId,
-    paymentMethod: '' as PaymentMethod | '',
+    paymentMethod: defaultMethod,
     notes: '',
     proofFile: null as File | null,
   })
@@ -145,12 +148,12 @@ export function OrderPage() {
               </h3>
               <p className="mt-3 text-white/60">
                 Thank you, {customerName}! We've received your order
-                {selectedProduct && ` for ${selectedProduct.name}`}. We'll verify
-                your payment and deliver within 15–60 minutes.
+                {selectedProduct && ` for ${selectedProduct.name}`}. Admin will
+                verify your payment and message you in My Orders within 15–60 minutes.
               </p>
               <p className="mt-4 text-sm text-white/50">
-                Redirecting you to <strong className="text-white">My Orders</strong> to chat
-                with admin…
+                Taking you to <strong className="text-white">My Orders</strong> to chat with
+                admin…
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <GradientButton to="/orders">
@@ -327,7 +330,7 @@ export function OrderPage() {
                   <Link to="/policies" className="text-accent-violet hover:underline">
                     Terms & Policies
                   </Link>
-                  .                   After submitting, message admin in My Orders. Email {shopContact.email} for urgent help.
+                  . After submitting, you can chat with admin in My Orders inside the website.
                 </div>
 
                 <GradientButton type="submit" className="w-full" size="lg" disabled={submitting}>

@@ -1,26 +1,33 @@
 import type { PaymentMethod } from '../types'
-import { shopContact } from './shopContact'
 
 /**
  * ═══════════════════════════════════════════════════════════════════
  *  PAYMENT DETAILS — EDIT HERE (GCash / Maya / Bank)
  * ═══════════════════════════════════════════════════════════════════
- *  Ilagay ang tunay na account numbers kapag handa ka na.
+ *  Ilagay ang tunay na account numbers at QR image path.
+ *  Place your real QR code under `public/payments/` and update `qrImage`.
  */
 
 export const shopPayments = {
   /** Pangalan sa GCash/Maya receipt */
   accountName: 'DANSEL SHOP',
 
+  /** Default selected payment method on order page */
+  defaultMethod: 'GCash' as PaymentMethod,
+
   gcash: {
     enabled: true,
     number: '09481913107',
-    qrNote: 'Scan QR sa GCash app o send to number below',
+    /** Path under /public — replace gcash-qr.svg with your real GCash QR image (png/jpg/svg). */
+    qrImage: '/payments/gcash-qr.svg',
+    qrCaption: 'Scan this QR in your GCash app, or send to the number below.',
   },
 
   maya: {
     enabled: true,
     number: '09481913107',
+    qrImage: '',
+    qrCaption: '',
   },
 
   bankTransfer: {
@@ -35,15 +42,13 @@ export const shopPayments = {
     email: '',
   },
 
-  /** Steps na lalabas sa order page */
+  /** Steps na lalabas sa order page (no Telegram step) */
   steps: [
-    'Sign in to your DANSEL SHOP account',
-    'Select product and payment method (GCash / Maya)',
-    'Pay the exact amount and upload payment proof',
-    'Message @DanseL_VIP on Telegram for faster delivery',
+    'Choose the product and your preferred payment method (GCash is default).',
+    'Scan the QR or send the exact amount to the number shown.',
+    'Upload a clear screenshot of the payment as proof.',
+    'Submit your order — admin will reply via in-site chat in My Orders.',
   ],
-
-  telegramConfirmNote: `After payment, message us on Telegram ${shopContact.telegramUsername} with your name + product ordered.`,
 }
 
 export function getPaymentDetails(method: PaymentMethod) {
@@ -54,8 +59,9 @@ export function getPaymentDetails(method: PaymentMethod) {
         lines: [
           `Account name: ${shopPayments.accountName}`,
           `GCash number: ${shopPayments.gcash.number}`,
-          shopPayments.gcash.qrNote,
         ],
+        qrImage: shopPayments.gcash.qrImage,
+        qrCaption: shopPayments.gcash.qrCaption,
       }
     case 'Maya':
       return {
@@ -64,6 +70,8 @@ export function getPaymentDetails(method: PaymentMethod) {
           `Account name: ${shopPayments.accountName}`,
           `Maya number: ${shopPayments.maya.number}`,
         ],
+        qrImage: shopPayments.maya.qrImage,
+        qrCaption: shopPayments.maya.qrCaption,
       }
     case 'Bank Transfer':
       return {
@@ -74,17 +82,21 @@ export function getPaymentDetails(method: PaymentMethod) {
               `Account name: ${shopPayments.bankTransfer.accountName}`,
               `Account number: ${shopPayments.bankTransfer.accountNumber}`,
             ]
-          : [`Contact ${shopContact.telegramUsername} on Telegram for bank details.`],
+          : ['Message admin in My Orders for bank details.'],
+        qrImage: '',
+        qrCaption: '',
       }
     case 'PayPal':
       return {
         title: 'PayPal',
         lines: shopPayments.paypal.enabled
           ? [`PayPal: ${shopPayments.paypal.email}`]
-          : [`Contact ${shopContact.email} for PayPal payment.`],
+          : ['Message admin in My Orders for PayPal details.'],
+        qrImage: '',
+        qrCaption: '',
       }
     default:
-      return { title: '', lines: [] }
+      return { title: '', lines: [], qrImage: '', qrCaption: '' }
   }
 }
 
