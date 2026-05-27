@@ -7,14 +7,16 @@ import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
 
 export function SignupPage() {
   const [form, setForm] = useState({
-    fullName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
   })
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -31,6 +33,12 @@ export function SignupPage() {
     e.preventDefault()
     setError('')
 
+    const normalized = normalizeUsername(form.username)
+    if (!isValidUsername(normalized)) {
+      setError('Username must be 3–20 characters (letters, numbers, underscore only)')
+      return
+    }
+
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -41,8 +49,13 @@ export function SignupPage() {
       return
     }
 
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Service to sign up')
+      return
+    }
+
     setLoading(true)
-    const { error: err } = await signUp(form.email, form.password, form.fullName)
+    const { error: err } = await signUp(form.email, form.password, form.username)
     setLoading(false)
 
     if (err) {
@@ -70,7 +83,7 @@ export function SignupPage() {
             </span>
             <h1 className="font-display text-3xl font-bold text-white">Create Account</h1>
             <p className="mt-2 text-sm text-white/50">
-              Sign up once — order faster next time
+              Choose a username — use it to sign in later
             </p>
           </div>
 
@@ -97,19 +110,23 @@ export function SignupPage() {
               )}
 
               <div>
-                <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-white/80">
+                <label htmlFor="username" className="mb-2 block text-sm font-medium text-white/80">
                   <User className="mr-1 inline h-4 w-4" />
-                  Full Name
+                  Username
                 </label>
                 <input
-                  id="fullName"
-                  name="fullName"
+                  id="username"
+                  name="username"
                   required
-                  value={form.fullName}
+                  autoComplete="username"
+                  value={form.username}
                   onChange={handleChange}
                   className={inputClass}
-                  placeholder="Juan Dela Cruz"
+                  placeholder="dansel_user"
                 />
+                <p className="mt-1 text-xs text-white/40">
+                  3–20 characters: letters, numbers, underscore
+                </p>
               </div>
 
               <div>
@@ -122,6 +139,7 @@ export function SignupPage() {
                   name="email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={form.email}
                   onChange={handleChange}
                   className={inputClass}
@@ -140,6 +158,7 @@ export function SignupPage() {
                   type="password"
                   required
                   minLength={6}
+                  autoComplete="new-password"
                   value={form.password}
                   onChange={handleChange}
                   className={inputClass}
@@ -156,6 +175,7 @@ export function SignupPage() {
                   name="confirmPassword"
                   type="password"
                   required
+                  autoComplete="new-password"
                   value={form.confirmPassword}
                   onChange={handleChange}
                   className={inputClass}
@@ -163,7 +183,31 @@ export function SignupPage() {
                 />
               </div>
 
-              <GradientButton type="submit" className="w-full" disabled={loading}>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 accent-accent-violet"
+                  required
+                />
+                <span className="text-sm leading-relaxed text-white/60">
+                  I have read and agreed with the{' '}
+                  <Link
+                    to="/policies#terms"
+                    target="_blank"
+                    className="font-medium text-accent-violet hover:text-accent-cyan hover:underline"
+                  >
+                    Terms of Service
+                  </Link>
+                </span>
+              </label>
+
+              <GradientButton
+                type="submit"
+                className="w-full"
+                disabled={loading || !agreedToTerms}
+              >
                 <UserPlus className="h-4 w-4" />
                 {loading ? 'Creating account…' : 'Sign Up'}
               </GradientButton>

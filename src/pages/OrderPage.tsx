@@ -29,7 +29,7 @@ export function OrderPage() {
   const preselectedId = searchParams.get('product') || ''
   const { user, profile } = useAuth()
 
-  const customerName = profile?.full_name ?? ''
+  const customerName = profile?.username ? `@${profile.username}` : ''
   const customerEmail = user?.email ?? ''
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)

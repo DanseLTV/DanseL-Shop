@@ -13,10 +13,13 @@ export type UserRole = 'customer' | 'admin'
 
 export interface UserProfile {
   id: string
-  full_name: string
+  username: string
+  email: string
   phone: string
   role: UserRole
   created_at?: string
+  /** @deprecated legacy column — use username */
+  full_name?: string
 }
 
 export interface OrderRecord {

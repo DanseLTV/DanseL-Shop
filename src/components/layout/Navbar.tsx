@@ -92,7 +92,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-accent-violet/40"
               >
                 <User className="h-4 w-4" />
-                {profile?.full_name?.split(' ')[0] ?? 'Account'}
+                {profile?.username ?? 'Account'}
               </Link>
               {isAdmin && (
                 <Link

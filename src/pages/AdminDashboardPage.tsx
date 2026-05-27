@@ -55,7 +55,7 @@ export function AdminDashboardPage() {
             <SectionHeading
               badge="Admin"
               title="Dashboard"
-              subtitle={`Welcome, ${profile?.full_name ?? 'Admin'}`}
+              subtitle={`Welcome, @${profile?.username ?? 'admin'}`}
               align="left"
             />
             <div className="flex gap-2">

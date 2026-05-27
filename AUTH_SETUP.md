@@ -12,6 +12,7 @@ Login, signup, and admin access use **Supabase** (free tier).
 
 1. Supabase Dashboard → **SQL Editor** → **New query**
 2. Copy all contents of `supabase/schema.sql` and **Run**
+3. If the project already existed before username login, also run `supabase/schema-username-migration.sql`
 
 ## 3. Get API keys
 
@@ -60,8 +61,8 @@ where id = (select id from auth.users where email = 'your-email@gmail.com');
 
 | URL | Purpose |
 |-----|---------|
-| `/signup` | Create customer account |
-| `/login` | Customer login |
+| `/signup` | Username + email + password (terms required) |
+| `/login` | Username **or** email + password |
 | `/order` | Checkout (login required) |
 | `/account` | View profile |
 | `/admin/login` | Admin login |

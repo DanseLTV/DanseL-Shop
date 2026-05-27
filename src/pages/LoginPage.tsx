@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, LogIn } from 'lucide-react'
+import { User, Lock, LogIn } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -9,7 +9,7 @@ import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -23,7 +23,7 @@ export function LoginPage() {
     setError('')
     setLoading(true)
 
-    const { error: err } = await signIn(email, password)
+    const { error: err } = await signIn(identifier, password)
     setLoading(false)
 
     if (err) {
@@ -45,7 +45,7 @@ export function LoginPage() {
             </span>
             <h1 className="font-display text-3xl font-bold text-white">Sign In</h1>
             <p className="mt-2 text-sm text-white/50">
-              Login to place orders at DANSEL SHOP
+              Use your username or email to sign in
             </p>
           </div>
 
@@ -62,18 +62,19 @@ export function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-white/80">
-                <Mail className="mr-1 inline h-4 w-4" />
-                Email
+              <label htmlFor="identifier" className="mb-2 block text-sm font-medium text-white/80">
+                <User className="mr-1 inline h-4 w-4" />
+                Username or Email
               </label>
               <input
-                id="email"
-                type="email"
+                id="identifier"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none"
-                placeholder="you@email.com"
+                placeholder="username or you@email.com"
               />
             </div>
 
@@ -87,6 +88,7 @@ export function LoginPage() {
                 type="password"
                 required
                 minLength={6}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none"

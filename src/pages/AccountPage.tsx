@@ -33,7 +33,7 @@ export function AccountPage() {
               </div>
               <div>
                 <p className="font-display text-lg font-semibold text-white">
-                  {profile?.full_name ?? 'Customer'}
+                  @{profile?.username ?? 'customer'}
                 </p>
                 <p className="text-sm text-white/50">{user?.email}</p>
               </div>

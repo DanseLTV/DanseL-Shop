@@ -12,6 +12,7 @@ import {
   isSupabaseConfigured,
   type UserProfile,
 } from '../lib/supabase'
+import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
 
 interface AuthContextValue {
   user: User | null
@@ -22,25 +23,58 @@ interface AuthContextValue {
   signUp: (
     email: string,
     password: string,
-    fullName: string
+    username: string
   ) => Promise<{ error: string | null }>
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signIn: (identifier: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function mapProfile(row: Record<string, unknown>): UserProfile {
+  const username =
+    (row.username as string) ||
+    (row.full_name as string) ||
+    'user'
+  return {
+    id: row.id as string,
+    username,
+    email: (row.email as string) || '',
+    phone: (row.phone as string) || '',
+    role: row.role as UserProfile['role'],
+    created_at: row.created_at as string | undefined,
+    full_name: row.full_name as string | undefined,
+  }
+}
+
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   if (!supabase) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, phone, role, created_at')
+    .select('id, username, email, full_name, phone, role, created_at')
     .eq('id', userId)
     .single()
 
   if (error || !data) return null
-  return data as UserProfile
+  return mapProfile(data as Record<string, unknown>)
+}
+
+async function resolveLoginEmail(identifier: string): Promise<string | null> {
+  if (!supabase) return null
+  const trimmed = identifier.trim()
+  if (!trimmed) return null
+
+  if (trimmed.includes('@')) {
+    return trimmed.toLowerCase()
+  }
+
+  const { data, error } = await supabase.rpc('get_login_email', {
+    identifier: trimmed,
+  })
+
+  if (error || !data) return null
+  return data as string
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -87,25 +121,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, username: string) => {
     if (!supabase) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
     }
 
+    const normalized = normalizeUsername(username)
+    if (!isValidUsername(normalized)) {
+      return {
+        error: 'Username must be 3–20 characters (letters, numbers, underscore only)',
+      }
+    }
+
+    const { data: taken } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', normalized)
+      .maybeSingle()
+
+    if (taken) {
+      return { error: 'Username is already taken' }
+    }
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: email.trim().toLowerCase(),
       password,
       options: {
-        data: { full_name: fullName, phone: '' },
+        data: { username: normalized, phone: '' },
       },
     })
 
     return { error: error?.message ?? null }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
     if (!supabase) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const email = await resolveLoginEmail(identifier)
+    if (!email) {
+      return { error: 'Invalid username or email' }
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
