@@ -1,4 +1,5 @@
 -- Run in Supabase SQL Editor after schema.sql and schema-messages.sql
+-- Safe to re-run (drops policies first if they already exist)
 
 -- Payment proof URL on orders
 alter table public.orders
@@ -10,6 +11,7 @@ values ('payment-proofs', 'payment-proofs', true)
 on conflict (id) do update set public = true;
 
 -- Customers upload to their own folder
+drop policy if exists "Users upload own payment proofs" on storage.objects;
 create policy "Users upload own payment proofs"
   on storage.objects for insert
   to authenticated
@@ -18,6 +20,7 @@ create policy "Users upload own payment proofs"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "Users update own payment proofs" on storage.objects;
 create policy "Users update own payment proofs"
   on storage.objects for update
   to authenticated
@@ -26,6 +29,7 @@ create policy "Users update own payment proofs"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "Public read payment proofs" on storage.objects;
 create policy "Public read payment proofs"
   on storage.objects for select
   to public

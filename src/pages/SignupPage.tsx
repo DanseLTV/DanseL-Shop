@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, UserPlus } from 'lucide-react'
+import { Mail, Lock, User, UserPlus, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -20,7 +20,11 @@ export function SignupPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { signUp, isConfigured } = useAuth()
+  const [step, setStep] = useState<'signup' | 'otp'>('signup')
+  const [otpCode, setOtpCode] = useState('')
+  const [signupEmail, setSignupEmail] = useState('')
+  const [resendingOtp, setResendingOtp] = useState(false)
+  const { signUp, verifySignupOtp, resendSignupOtp, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
@@ -55,7 +59,7 @@ export function SignupPage() {
     }
 
     setLoading(true)
-    const { error: err } = await signUp(form.email, form.password, form.username)
+    const { error: err, email } = await signUp(form.email, form.password, form.username)
     setLoading(false)
 
     if (err) {
@@ -63,10 +67,45 @@ export function SignupPage() {
       return
     }
 
+    setSignupEmail(email ?? form.email.trim().toLowerCase())
+    setStep('otp')
+    setError('')
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (otpCode.trim().length < 6) {
+      setError('Please enter the 6-digit OTP sent to your email.')
+      return
+    }
+
+    setLoading(true)
+    const { error: verifyError } = await verifySignupOtp(signupEmail, otpCode)
+    setLoading(false)
+
+    if (verifyError) {
+      setError(verifyError)
+      return
+    }
+
     setSuccess(true)
     setTimeout(() => {
       navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true })
-    }, 2500)
+    }, 1800)
+  }
+
+  const handleResendOtp = async () => {
+    if (!signupEmail) return
+    setResendingOtp(true)
+    setError('')
+    const { error: resendError } = await resendSignupOtp(signupEmail)
+    setResendingOtp(false)
+    if (resendError) {
+      setError(resendError)
+      return
+    }
   }
 
   const inputClass =
@@ -92,12 +131,66 @@ export function SignupPage() {
           {success ? (
             <div className="glass-card p-8 text-center">
               <p className="font-display text-xl font-semibold text-emerald-400">
-                Account created!
+                Verified successfully!
               </p>
               <p className="mt-2 text-sm text-white/60">
-                Redirecting to login…
+                Your account is now active. You can sign in with username/email + password.
               </p>
+              <p className="mt-2 text-xs text-white/40">Redirecting to login…</p>
             </div>
+          ) : step === 'otp' ? (
+            <motion.form
+              onSubmit={handleVerifyOtp}
+              className="glass-card space-y-4 p-6 sm:p-8"
+            >
+              <div className="rounded-lg border border-accent-violet/30 bg-accent-violet/10 px-4 py-3">
+                <p className="text-sm text-white/80">
+                  We sent a signup OTP code to <span className="font-semibold">{signupEmail}</span>.
+                </p>
+                <p className="mt-1 text-xs text-white/50">
+                  Enter the code below to finish creating your account.
+                </p>
+              </div>
+
+              {error && (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {error}
+                </p>
+              )}
+
+              <div>
+                <label htmlFor="otpCode" className="mb-2 block text-sm font-medium text-white/80">
+                  <ShieldCheck className="mr-1 inline h-4 w-4" />
+                  Email OTP
+                </label>
+                <input
+                  id="otpCode"
+                  name="otpCode"
+                  type="text"
+                  required
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className={inputClass}
+                  placeholder="6-digit code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+              </div>
+
+              <GradientButton type="submit" className="w-full" disabled={loading}>
+                <ShieldCheck className="h-4 w-4" />
+                {loading ? 'Verifying OTP…' : 'Verify OTP'}
+              </GradientButton>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendingOtp}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white/80 transition-colors hover:border-accent-violet/40 hover:text-white disabled:opacity-60"
+              >
+                {resendingOtp ? 'Resending OTP…' : 'Resend OTP'}
+              </button>
+            </motion.form>
           ) : (
             <motion.form
               onSubmit={handleSubmit}

@@ -1,48 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Shield } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { checkIsAdminUid } from '../lib/adminCheck'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
-import { withTimeout } from '../utils/asyncHelpers'
-
-async function checkIsAdmin(userId: string): Promise<{ isAdmin: boolean; errorMessage?: string }> {
-  if (!supabase) return { isAdmin: false, errorMessage: 'No Supabase client' }
-
-  // Avoid selecting directly from `profiles` here (RLS policies can recurse in some setups).
-  // This RPC should run as SECURITY DEFINER and return a boolean.
-  const result = await withTimeout(
-    supabase.rpc('is_admin_uid', { uid: userId }) as unknown as Promise<{
-      data: boolean | null
-      error: { message: string } | null
-    }>,
-    12000,
-    'Admin check timed out. Please try again.'
-  )
-  const { data, error } = result
-  if (error) {
-    if (error.message.toLowerCase().includes('does not exist')) {
-      return {
-        isAdmin: false,
-        errorMessage:
-          'Admin check function is missing. Run supabase/schema-admin-rpc.sql in SQL Editor.',
-      }
-    }
-    return { isAdmin: false, errorMessage: error.message }
-  }
-  return { isAdmin: Boolean(data) }
-}
 
 export function AdminLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, signOut, isConfigured } = useAuth()
+  const { signInWithEmail, signOut, refreshProfile, isConfigured } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,38 +23,28 @@ export function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const { error: err } = await withTimeout(
-        signIn(email, password),
-        12000,
-        'Sign-in timed out. Check your internet and Supabase status.'
-      )
-      if (err) {
-        setError(err)
+      const { error: signInError, user } = await signInWithEmail(email, password)
+
+      if (signInError) {
+        setError(signInError)
         return
       }
 
-      const {
-        data: { user },
-      } = await withTimeout(
-        supabase!.auth.getUser(),
-        12000,
-        'Fetching user timed out.'
-      )
       if (!user) {
-        await signOut()
-        setError('Could not get user. Please try again.')
+        setError('Sign-in succeeded but no session was returned. Please try again.')
         return
       }
 
-      const check = await checkIsAdmin(user.id)
+      const check = await checkIsAdminUid(user.id)
       if (!check.isAdmin) {
         await signOut()
         setError(
-          `Access denied. ${check.errorMessage ? `(${check.errorMessage})` : 'This account is not set as admin role in profiles table.'}`
+          `Access denied. ${check.errorMessage ?? 'This account is not set as admin in profiles table.'}`
         )
         return
       }
 
+      await refreshProfile()
       navigate('/admin', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Admin login failed. Please try again.')
@@ -97,21 +59,18 @@ export function AdminLoginPage() {
       <div className="relative mx-auto max-w-md px-4 pb-20 pt-8">
         <ScrollReveal>
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-violet to-accent-cyan shadow-glow">
-              <Shield className="h-7 w-7 text-white" />
-            </div>
+            <img
+              src="/shop-logo.png"
+              alt="Dansel Shop"
+              className="mx-auto mb-4 h-16 w-16 rounded-2xl border border-white/10 object-cover shadow-glow"
+            />
             <h1 className="font-display text-3xl font-bold text-white">Admin Sign In</h1>
-            <p className="mt-2 text-sm text-white/50">
-              DANSEL SHOP admin access only
-            </p>
+            <p className="mt-2 text-sm text-white/50">DANSEL SHOP admin access only</p>
           </div>
 
           {!isConfigured && <AuthConfigBanner />}
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="glass-card space-y-5 p-6 sm:p-8"
-          >
+          <motion.form onSubmit={handleSubmit} className="glass-card space-y-5 p-6 sm:p-8">
             {error && (
               <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 {error}

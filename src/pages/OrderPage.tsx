@@ -16,15 +16,14 @@ import { formatPrice } from '../data/products'
 import type { PaymentMethod } from '../types'
 import { enabledPaymentMethods, shopPayments } from '../data/shopPayments'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
-import { uploadPaymentProof, validateProofFile } from '../utils/orderProof'
+import { validateProofFile } from '../utils/orderProof'
+import { submitOrder } from '../utils/orderSubmit'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { PaymentInstructions } from '../components/order/PaymentInstructions'
 import { useProducts } from '../hooks/useProducts'
-import { withTimeout } from '../utils/asyncHelpers'
 
 export function OrderPage() {
   const { products: liveProducts } = useProducts()
@@ -38,6 +37,7 @@ export function OrderPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [submitWarnings, setSubmitWarnings] = useState<string[]>([])
   const defaultMethod: PaymentMethod | '' = enabledPaymentMethods.includes(shopPayments.defaultMethod)
     ? shopPayments.defaultMethod
     : enabledPaymentMethods[0] ?? ''
@@ -68,8 +68,9 @@ export function OrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError('')
+    setSubmitWarnings([])
 
-    if (!supabase || !user) {
+    if (!user) {
       setSubmitError('Please sign in to place an order.')
       return
     }
@@ -94,78 +95,27 @@ export function OrderPage() {
 
     setSubmitting(true)
     try {
-      const result = await withTimeout(
-        supabase
-          .from('orders')
-          .insert({
-            user_id: user.id,
-            product_id: selectedProduct.id,
-            product_name: selectedProduct.name,
-            amount: selectedProduct.price,
-            payment_method: form.paymentMethod,
-            notes: form.notes || null,
-            status: 'pending',
-          })
-          .select('id')
-          .single() as unknown as Promise<{
-            data: { id: string } | null
-            error: { message: string } | null
-          }>,
-        15000,
-        'Order submission timed out. Please try again.'
-      )
-      const { data, error } = result
+      const result = await submitOrder({
+        userId: user.id,
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        amount: selectedProduct.price,
+        paymentMethod: form.paymentMethod,
+        notes: form.notes,
+        proofFile: form.proofFile,
+      })
 
-      if (error || !data) {
-        const hint = error?.message?.toLowerCase().includes('violates foreign key')
-          ? ' Your profile row might be missing in Supabase. Run username migration SQL and sign out/sign in.'
-          : ''
-        setSubmitError((error?.message ?? 'Could not save order. Please try again.') + hint)
+      if (result.error || !result.orderId) {
+        setSubmitError(result.error ?? 'Could not save order. Please try again.')
         return
       }
 
-      const orderId = data.id
-      const { url: proofUrl, error: proofError } = await withTimeout(
-        uploadPaymentProof(form.proofFile, user.id, orderId),
-        20000,
-        'Payment proof upload timed out. Please retry.'
-      )
-
-      if (proofUrl) {
-        await withTimeout(
-          supabase.from('orders').update({ proof_url: proofUrl }).eq('id', orderId),
-          10000,
-          'Saving payment proof link timed out.'
-        )
+      if (result.warnings.length > 0) {
+        setSubmitWarnings(result.warnings)
       }
 
-      const proofNote = proofUrl
-        ? 'Payment proof uploaded.'
-        : proofError
-          ? `Payment proof upload failed (${proofError}) — please send screenshot in chat.`
-          : ''
-
-      await withTimeout(
-        supabase.from('order_messages').insert({
-          order_id: orderId,
-          sender_id: user.id,
-          sender_role: 'customer',
-          body: [
-            `New order: ${selectedProduct.name}`,
-            `Payment: ${form.paymentMethod}`,
-            `Amount: ${formatPrice(selectedProduct.price)}`,
-            proofNote,
-            form.notes ? `Notes: ${form.notes}` : '',
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        }),
-        10000,
-        'Opening order chat timed out.'
-      )
-
       setSubmitted(true)
-      setTimeout(() => navigate(`/orders/${orderId}`), 2000)
+      setTimeout(() => navigate(`/orders/${result.orderId}`), 2000)
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Order submit failed. Please try again.')
     } finally {
@@ -219,6 +169,13 @@ export function OrderPage() {
                 {selectedProduct && ` for ${selectedProduct.name}`}. Admin will
                 verify your payment and message you in My Orders within 15–60 minutes.
               </p>
+              {submitWarnings.length > 0 && (
+                <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-left text-sm text-amber-200">
+                  {submitWarnings.map((w) => (
+                    <p key={w}>{w}</p>
+                  ))}
+                </div>
+              )}
               <p className="mt-4 text-sm text-white/50">
                 Taking you to <strong className="text-white">My Orders</strong> to chat with
                 admin…

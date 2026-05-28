@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Lock, LogIn } from 'lucide-react'
+import { User, Lock, LogIn, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { isEmailNotConfirmedError } from '../utils/authErrors'
 
 export function LoginPage() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loginEmail, setLoginEmail] = useState<string | null>(null)
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [loading, setLoading] = useState(false)
-  const { signIn, isConfigured, user, loading: authLoading } = useAuth()
+  const { signIn, resendConfirmationEmail, isConfigured, user, loading: authLoading } =
+    useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
+
+  const needsEmailConfirmation = Boolean(error && isEmailNotConfirmedError(error))
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -27,10 +33,14 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setResendStatus('idle')
+    setLoginEmail(null)
     setLoading(true)
 
-    const { error: err } = await signIn(identifier, password)
+    const { error: err, loginEmail: resolvedEmail } = await signIn(identifier, password)
     setLoading(false)
+
+    if (resolvedEmail) setLoginEmail(resolvedEmail)
 
     if (err) {
       setError(err)
@@ -38,6 +48,18 @@ export function LoginPage() {
     }
 
     navigate(decodeURIComponent(redirect), { replace: true })
+  }
+
+  const handleResend = async () => {
+    if (!loginEmail) return
+    setResendStatus('sending')
+    const { error: resendError } = await resendConfirmationEmail(loginEmail)
+    if (resendError) {
+      setError(resendError)
+      setResendStatus('idle')
+      return
+    }
+    setResendStatus('sent')
   }
 
   return (
@@ -64,9 +86,33 @@ export function LoginPage() {
             className="glass-card space-y-5 p-6 sm:p-8"
           >
             {error && (
-              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                {error}
-              </p>
+              <div className="space-y-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <p>{error}</p>
+                {needsEmailConfirmation && (
+                  <div className="border-t border-red-500/20 pt-3 text-red-200/90">
+                    <p className="text-xs text-red-200/70">
+                      Username &quot;{identifier}&quot; is OK — Supabase still needs you to confirm
+                      the email used at signup
+                      {loginEmail ? ` (${loginEmail})` : ''}.
+                    </p>
+                    {loginEmail && (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resendStatus === 'sending' || resendStatus === 'sent'}
+                        className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent-violet hover:text-accent-cyan disabled:opacity-60"
+                      >
+                        <Mail className="h-4 w-4" />
+                        {resendStatus === 'sent'
+                          ? 'Confirmation email sent — check inbox & spam'
+                          : resendStatus === 'sending'
+                            ? 'Sending…'
+                            : 'Resend confirmation email'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             <div>
