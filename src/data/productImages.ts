@@ -1,24 +1,21 @@
 /**
- * Brand images (Wikimedia Commons — stable CDN).
- * Used for all product variants sharing the same brand.
+ * Local brand images — served from /public/products/brands/
+ * (Always loads on Vercel; no external hotlink blocking.)
  */
 
-const WIKI = 'https://upload.wikimedia.org/wikipedia'
-
 export const brandImageUrls = {
-  disney: `${WIKI}/commons/thumb/3/3e/Disney%2B_logo.svg/512px-Disney%2B_logo.svg.png`,
-  iqiyi: `${WIKI}/commons/thumb/4/4f/IQIYI_logo.svg/512px-IQIYI_logo.svg.png`,
-  iwanttfc: `${WIKI}/commons/thumb/f/f1/IWantTFC_logo.svg/512px-IWantTFC_logo.svg.png`,
-  wow: `${WIKI}/en/4/4a/WOW_Presents_Plus.png`,
-  viu: `${WIKI}/commons/thumb/8/8d/Viu_logo.svg/512px-Viu_logo.svg.png`,
-  hbo: `${WIKI}/commons/thumb/1/17/HBO_Max_Logo.svg/512px-HBO_Max_Logo.svg.png`,
-  prime: `${WIKI}/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/512px-Amazon_Prime_Video_logo.svg.png`,
-  quillbot: `${WIKI}/commons/thumb/8/8a/Quillbot_logo.svg/512px-Quillbot_logo.svg.png`,
-  grammarly: `${WIKI}/commons/thumb/3/31/Grammarly_logo.svg/512px-Grammarly_logo.svg.png`,
-  chatgpt: `${WIKI}/commons/thumb/0/04/ChatGPT_logo.svg/512px-ChatGPT_logo.svg.png`,
+  disney: '/products/brands/disney.svg',
+  iqiyi: '/products/brands/iqiyi.svg',
+  iwanttfc: '/products/brands/iwanttfc.svg',
+  wow: '/products/brands/wow.svg',
+  viu: '/products/brands/viu.svg',
+  hbo: '/products/brands/hbo.svg',
+  prime: '/products/brands/prime.svg',
+  quillbot: '/products/brands/quillbot.svg',
+  grammarly: '/products/brands/grammarly.svg',
+  chatgpt: '/products/brands/chatgpt.svg',
 } as const
 
-/** Map every product id → brand image URL */
 export function resolveProductImageUrl(productId: string): string {
   if (productId.startsWith('disney')) return brandImageUrls.disney
   if (productId.startsWith('iqiyi')) return brandImageUrls.iqiyi
@@ -31,4 +28,8 @@ export function resolveProductImageUrl(productId: string): string {
   if (productId.startsWith('grammarly')) return brandImageUrls.grammarly
   if (productId.startsWith('chatgpt')) return brandImageUrls.chatgpt
   return `/products/${productId}.svg`
+}
+
+export function isLocalProductImage(src: string): boolean {
+  return src.startsWith('/products/')
 }

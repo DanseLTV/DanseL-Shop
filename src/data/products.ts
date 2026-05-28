@@ -24,7 +24,7 @@ function toProduct(entry: (typeof productCatalog)[number]): Product {
     features: entry.features,
     imageGradient: entry.gradient,
     image: entry.image ?? resolveProductImageUrl(entry.id),
-    imageFit: entry.imageFit ?? 'logo',
+    imageFit: entry.imageFit ?? 'cover',
   }
 }
 

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Disney+">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#113CCF"/>
+      <stop offset="100%" stop-color="#0a2080"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <circle cx="650" cy="80" r="160" fill="#fff" opacity="0.08"/>
+  <circle cx="100" cy="420" r="120" fill="#fff" opacity="0.05"/>
+  <text x="400" y="260" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="72" font-weight="700">Disney+</text>
+  <text x="400" y="320" text-anchor="middle" fill="#fff" opacity="0.75" font-family="Segoe UI,Arial,sans-serif" font-size="22" letter-spacing="4">STREAMING</text>
+</svg>

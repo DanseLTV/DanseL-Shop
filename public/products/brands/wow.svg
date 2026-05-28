@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="WOW Presents">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e91e8c"/>
+      <stop offset="50%" stop-color="#9c27b0"/>
+      <stop offset="100%" stop-color="#673ab7"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <text x="400" y="220" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="64" font-weight="800">WOW</text>
+  <text x="400" y="290" text-anchor="middle" fill="#fff" opacity="0.9" font-family="Segoe UI,Arial,sans-serif" font-size="36" font-weight="600">Presents+</text>
+</svg>

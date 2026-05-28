@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="iQIYI">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00BE06"/>
+      <stop offset="100%" stop-color="#007a04"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <circle cx="680" cy="100" r="140" fill="#fff" opacity="0.1"/>
+  <text x="400" y="270" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="80" font-weight="800" font-style="italic">iQIYI</text>
+  <text x="400" y="330" text-anchor="middle" fill="#fff" opacity="0.8" font-family="Segoe UI,Arial,sans-serif" font-size="20" letter-spacing="3">PREMIUM</text>
+</svg>
