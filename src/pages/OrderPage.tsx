@@ -12,7 +12,7 @@ import {
   Send,
   ListOrdered,
 } from 'lucide-react'
-import { products, getProductById, formatPrice } from '../data/products'
+import { formatPrice } from '../data/products'
 import type { PaymentMethod } from '../types'
 import { enabledPaymentMethods, shopPayments } from '../data/shopPayments'
 import { useAuth } from '../context/AuthContext'
@@ -23,8 +23,10 @@ import { SectionHeading } from '../components/ui/SectionHeading'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { PaymentInstructions } from '../components/order/PaymentInstructions'
+import { useProducts } from '../hooks/useProducts'
 
 export function OrderPage() {
+  const { products: liveProducts } = useProducts()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const preselectedId = searchParams.get('product') || ''
@@ -46,7 +48,9 @@ export function OrderPage() {
     proofFile: null as File | null,
   })
 
-  const selectedProduct = form.productId ? getProductById(form.productId) : null
+  const selectedProduct = form.productId
+    ? liveProducts.find((p) => p.id === form.productId) ?? null
+    : null
 
   const handleChange = (
     e: React.ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>
@@ -104,7 +108,10 @@ export function OrderPage() {
       .single()
 
     if (error || !data) {
-      setSubmitError(error?.message ?? 'Could not save order. Please try again.')
+      const hint = error?.message?.toLowerCase().includes('violates foreign key')
+        ? ' Your profile row might be missing in Supabase. Run username migration SQL and sign out/sign in.'
+        : ''
+      setSubmitError((error?.message ?? 'Could not save order. Please try again.') + hint)
       setSubmitting(false)
       return
     }
@@ -276,7 +283,7 @@ export function OrderPage() {
                     <option value="" className="bg-midnight-900">
                       Choose a product...
                     </option>
-                    {products.map((p) => (
+                    {liveProducts.map((p) => (
                       <option key={p.id} value={p.id} className="bg-midnight-900">
                         {p.name} — {formatPrice(p.price)} / {p.duration}
                       </option>

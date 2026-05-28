@@ -15,7 +15,16 @@ async function checkIsAdmin(userId: string): Promise<{ isAdmin: boolean; errorMe
   // Avoid selecting directly from `profiles` here (RLS policies can recurse in some setups).
   // This RPC should run as SECURITY DEFINER and return a boolean.
   const { data, error } = await supabase.rpc('is_admin_uid', { uid: userId })
-  if (error) return { isAdmin: false, errorMessage: error.message }
+  if (error) {
+    if (error.message.toLowerCase().includes('does not exist')) {
+      return {
+        isAdmin: false,
+        errorMessage:
+          'Admin check function is missing. Run supabase/schema-admin-rpc.sql in SQL Editor.',
+      }
+    }
+    return { isAdmin: false, errorMessage: error.message }
+  }
   return { isAdmin: Boolean(data) }
 }
 
@@ -51,7 +60,9 @@ export function AdminLoginPage() {
     if (!check.isAdmin) {
       await signOut()
       setLoading(false)
-      setError(`Access denied. ${check.errorMessage ? `(${check.errorMessage})` : ''}`)
+      setError(
+        `Access denied. ${check.errorMessage ? `(${check.errorMessage})` : 'This account is not set as admin role in profiles table.'}`
+      )
       return
     }
 

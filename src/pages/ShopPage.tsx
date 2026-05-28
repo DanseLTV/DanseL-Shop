@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal, Package } from 'lucide-react'
-import { products } from '../data/products'
 import type { Product } from '../types'
 import { useOrderNavigation } from '../hooks/useOrderNavigation'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
@@ -10,12 +9,10 @@ import { ProductCard } from '../components/shop/ProductCard'
 import { ProductDetailModal } from '../components/shop/ProductDetailModal'
 import { OrderGuide } from '../components/shop/OrderGuide'
 import { ShopTrustStrip } from '../components/shop/ShopTrustStrip'
-
-const categories = ['All', ...new Set(products.map((p) => p.category))]
-
-const minPrice = Math.min(...products.map((p) => p.price))
+import { useProducts } from '../hooks/useProducts'
 
 export function ShopPage() {
+  const { products: liveProducts } = useProducts()
   const [searchParams, setSearchParams] = useSearchParams()
   const goToOrder = useOrderNavigation()
   const initialCategory = searchParams.get('category') || 'All'
@@ -24,6 +21,7 @@ export function ShopPage() {
   const [category, setCategory] = useState(initialCategory)
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const minPrice = liveProducts.length ? Math.min(...liveProducts.map((p) => p.price)) : 0
 
   useEffect(() => {
     const cat = searchParams.get('category')
@@ -42,7 +40,7 @@ export function ShopPage() {
 
   const filtered = useMemo(
     () =>
-      products
+      liveProducts
         .filter((p) => {
           const q = search.toLowerCase()
           const matchesSearch =
@@ -58,7 +56,7 @@ export function ShopPage() {
           if (sortBy === 'price-desc') return b.price - a.price
           return a.name.localeCompare(b.name)
         }),
-    [search, category, sortBy]
+    [liveProducts, search, category, sortBy]
   )
 
   const handleOrder = (product: Product) => {
@@ -81,7 +79,7 @@ export function ShopPage() {
               <span className="gradient-text">subscriptions</span>
             </h1>
             <p className="mt-3 max-w-2xl text-base text-white/55 sm:text-lg">
-              Browse {products.length} products — sign in only when you&apos;re ready to checkout.
+              Browse {liveProducts.length} products — sign in only when you&apos;re ready to checkout.
             </p>
           </div>
         </ScrollReveal>
@@ -138,7 +136,7 @@ export function ShopPage() {
           </div>
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-            {categories.map((cat) => (
+            {['All', ...new Set(liveProducts.map((p) => p.category))].map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -188,7 +186,7 @@ export function ShopPage() {
         )}
 
         <p className="mt-10 text-center text-sm text-white/40">
-          {filtered.length} of {products.length} products · from ₱{minPrice}
+          {filtered.length} of {liveProducts.length} products · from ₱{minPrice}
         </p>
       </div>
 

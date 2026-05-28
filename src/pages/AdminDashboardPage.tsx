@@ -14,6 +14,7 @@ import { OrderStatusBadge } from '../components/order/OrderStatusBadge'
 import { OrderProgress } from '../components/order/OrderProgress'
 import { PaymentProofViewer } from '../components/order/PaymentProofViewer'
 import type { OrderStatus } from '../data/orderStatus'
+import { ProductOverridesPanel } from '../components/admin/ProductOverridesPanel'
 
 type StatusFilter = 'all' | OrderStatus
 
@@ -348,6 +349,8 @@ export function AdminDashboardPage() {
             View shop
           </Link>
         </p>
+
+        <ProductOverridesPanel />
       </div>
     </div>
   )

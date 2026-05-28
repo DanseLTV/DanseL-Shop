@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import type { Product } from '../../types'
-import { getFeaturedProducts } from '../../data/products'
 import { useOrderNavigation } from '../../hooks/useOrderNavigation'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GradientButton } from '../ui/GradientButton'
 import { ProductCard } from '../shop/ProductCard'
 import { ProductDetailModal } from '../shop/ProductDetailModal'
+import { useProducts } from '../../hooks/useProducts'
 
 export function FeaturedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const goToOrder = useOrderNavigation()
-  const featured = getFeaturedProducts()
+  const { products } = useProducts()
+  const featured = products.filter((p) => p.featured)
 
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
