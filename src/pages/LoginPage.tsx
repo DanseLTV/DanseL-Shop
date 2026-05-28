@@ -148,6 +148,14 @@ export function LoginPage() {
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none"
                 placeholder="••••••••"
               />
+              <div className="mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-accent-violet hover:text-accent-cyan"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <GradientButton type="submit" className="w-full" disabled={loading}>

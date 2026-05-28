@@ -14,6 +14,7 @@ import { OrderPage } from './pages/OrderPage'
 import { PoliciesPage } from './pages/PoliciesPage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { AccountPage } from './pages/AccountPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
@@ -35,6 +36,7 @@ function App() {
               <Route path="/policies" element={<PoliciesPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route
                 path="/order"
                 element={

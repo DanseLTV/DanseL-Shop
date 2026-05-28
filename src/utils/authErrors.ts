@@ -10,6 +10,9 @@ export function mapAuthError(message: string): string {
   if (lower.includes('invalid otp') || lower.includes('token is invalid')) {
     return 'Invalid OTP code. Please check and try again.'
   }
+  if (lower.includes('new password should be different')) {
+    return 'New password must be different from your current password.'
+  }
   if (lower.includes('invalid login credentials')) {
     return 'Wrong username/email or password.'
   }

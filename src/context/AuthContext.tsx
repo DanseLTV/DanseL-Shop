@@ -40,6 +40,12 @@ interface AuthContextValue {
   signIn: (identifier: string, password: string) => Promise<SignInResult>
   signInWithEmail: (email: string, password: string) => Promise<SignInResult>
   resendConfirmationEmail: (email: string) => Promise<{ error: string | null }>
+  requestPasswordResetOtp: (email: string) => Promise<{ error: string | null }>
+  resetPasswordWithOtp: (
+    email: string,
+    token: string,
+    newPassword: string
+  ) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   verifyAdmin: (userId?: string) => Promise<boolean>
@@ -238,6 +244,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? mapAuthError(error.message) : null }
   }
 
+  const requestPasswordResetOtp = async (email: string) => {
+    if (!supabase) {
+      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase())
+    return { error: error ? mapAuthError(error.message) : null }
+  }
+
+  const resetPasswordWithOtp = async (email: string, token: string, newPassword: string) => {
+    if (!supabase) {
+      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedToken = token.trim()
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: normalizedToken,
+      type: 'recovery',
+    })
+
+    if (verifyError) {
+      return { error: mapAuthError(verifyError.message) }
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+    return { error: updateError ? mapAuthError(updateError.message) : null }
+  }
+
   const signUp = async (email: string, password: string, username: string) => {
     if (!supabase) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
@@ -341,6 +380,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signInWithEmail,
         resendConfirmationEmail,
+        requestPasswordResetOtp,
+        resetPasswordWithOtp,
         signOut,
         refreshProfile,
         verifyAdmin,
