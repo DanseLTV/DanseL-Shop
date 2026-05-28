@@ -2,9 +2,10 @@ import type { Product } from '../types'
 import { shopConfig } from './shopConfig'
 import { productCatalog, priceOverrides } from './productCatalog'
 import { categoryMeta } from './categoryMeta'
+import { resolveProductImageUrl } from './productImages'
 
-/** Default image path — palitan ang .png file sa public/products/ (same filename) */
-export const getProductImagePath = (id: string) => `/products/${id}.svg`
+/** @deprecated use resolveProductImageUrl */
+export const getProductImagePath = (id: string) => resolveProductImageUrl(id)
 
 /** Converts catalog entries → products shown on the site */
 function toProduct(entry: (typeof productCatalog)[number]): Product {
@@ -22,7 +23,8 @@ function toProduct(entry: (typeof productCatalog)[number]): Product {
     badge: entry.badge,
     features: entry.features,
     imageGradient: entry.gradient,
-    image: entry.image ?? getProductImagePath(entry.id),
+    image: entry.image ?? resolveProductImageUrl(entry.id),
+    imageFit: entry.imageFit ?? 'logo',
   }
 }
 

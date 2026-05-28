@@ -10,8 +10,10 @@ export interface Product {
   badge?: string
   features: string[]
   imageGradient: string
-  /** Path sa public/ — hal. /products/netflix-premium.png */
+  /** Brand image URL or path under public/ */
   image?: string
+  /** Logo-style image (centered) vs full-bleed cover */
+  imageFit?: 'logo' | 'cover'
 }
 
 export interface Review {

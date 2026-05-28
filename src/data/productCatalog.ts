@@ -8,9 +8,10 @@ import type { Product } from '../types'
 
 export const priceOverrides: Partial<Record<string, number>> = {}
 
-export type CatalogEntry = Omit<Product, 'imageGradient' | 'image'> & {
+export type CatalogEntry = Omit<Product, 'imageGradient' | 'image' | 'imageFit'> & {
   gradient: string
   image?: string
+  imageFit?: Product['imageFit']
   enabled?: boolean
 }
 

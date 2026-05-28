@@ -12,6 +12,12 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 
+  @media (max-width: 1023px) {
+    main {
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  }
+
   ::selection {
     @apply bg-accent-violet/40 text-white;
   }

@@ -5,9 +5,9 @@ import { shopContact } from '../../data/shopContact'
 const footerLinks = {
   shop: [
     { label: 'All Products', to: '/' },
-    { label: 'Streaming', to: '/shop?category=Streaming' },
-    { label: 'AI Tools', to: '/shop?category=AI Tools' },
-    { label: 'Writing Tools', to: '/shop?category=Writing Tools' },
+    { label: 'Streaming', to: '/?category=Streaming' },
+    { label: 'AI Tools', to: '/?category=AI Tools' },
+    { label: 'Writing Tools', to: '/?category=Writing Tools' },
   ],
   support: [
     { label: 'FAQ', to: '/home#faq' },

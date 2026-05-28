@@ -49,10 +49,14 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
   }
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms: number,
+  fallback: T
+): Promise<T> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => resolve(fallback), ms)
-    promise.then(
+    Promise.resolve(promise).then(
       (value) => {
         clearTimeout(timer)
         resolve(value)
@@ -68,15 +72,17 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   if (!supabase) return null
   try {
-    const { data, error } = await withTimeout(
+    const result = await withTimeout(
       supabase
         .from('profiles')
         .select('id, username, email, full_name, phone, role, created_at')
         .eq('id', userId)
         .maybeSingle(),
       PROFILE_FETCH_TIMEOUT_MS,
-      { data: null, error: { message: 'Profile fetch timed out' } }
+      null
     )
+    if (!result) return null
+    const { data, error } = result
     if (error || !data) {
       if (error) console.warn('fetchProfile error', error)
       return null

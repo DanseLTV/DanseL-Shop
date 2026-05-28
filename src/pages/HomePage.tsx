@@ -1,3 +1,4 @@
+import { useHashScroll } from '../hooks/useHashScroll'
 import { Hero } from '../components/home/Hero'
 import { FeaturedProducts } from '../components/home/FeaturedProducts'
 import { Categories } from '../components/home/Categories'
@@ -10,6 +11,8 @@ import { ContactSection } from '../components/home/ContactSection'
 import { reviews } from '../data/reviews'
 
 export function HomePage() {
+  useHashScroll()
+
   return (
     <>
       <Hero />

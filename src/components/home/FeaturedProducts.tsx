@@ -44,7 +44,7 @@ export function FeaturedProducts() {
 
         <ScrollReveal delay={0.3}>
           <div className="mt-12 text-center">
-            <GradientButton to="/shop" variant="outline">
+            <GradientButton to="/" variant="outline">
               View All Products
             </GradientButton>
           </div>

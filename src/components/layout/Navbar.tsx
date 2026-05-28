@@ -6,13 +6,19 @@ import { useAuth } from '../../context/AuthContext'
 import { GradientButton } from '../ui/GradientButton'
 
 const navLinks = [
-  { label: 'Shop', to: '/' },
-  { label: 'About', to: '/home' },
-  { label: 'Reviews', to: '/home#reviews' },
-  { label: 'FAQ', to: '/home#faq' },
-  { label: 'Policies', to: '/policies' },
-  { label: 'Contact', to: '/home#contact' },
+  { label: 'Shop', to: '/', exact: true },
+  { label: 'About', to: '/home', exact: true },
+  { label: 'Reviews', to: '/home#reviews', hash: true },
+  { label: 'FAQ', to: '/home#faq', hash: true },
+  { label: 'Policies', to: '/policies', exact: true },
+  { label: 'Contact', to: '/home#contact', hash: true },
 ]
+
+function isLinkActive(pathname: string, link: (typeof navLinks)[number]) {
+  if (link.hash) return false
+  if (link.exact) return pathname === link.to
+  return pathname.startsWith(link.to)
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -30,14 +36,12 @@ export function Navbar() {
     setMobileOpen(false)
   }, [location.pathname])
 
-  const handleHashLink = (to: string) => {
-    if (to.includes('#')) {
-      const id = to.split('#')[1]
-      if (location.pathname === '/home') {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
-  }
+  const linkClass = (active: boolean) =>
+    `relative rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+      active
+        ? 'text-white'
+        : 'text-white/70 hover:bg-white/5 hover:text-white'
+    }`
 
   return (
     <motion.header
@@ -46,11 +50,11 @@ export function Navbar() {
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'border-b border-white/10 bg-midnight-950/80 backdrop-blur-xl'
-          : 'bg-transparent'
+          ? 'border-b border-white/10 bg-midnight-950/90 backdrop-blur-xl shadow-glass'
+          : 'bg-midnight-950/40 backdrop-blur-md'
       }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         <Link to="/" className="group flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-violet to-accent-cyan shadow-glow">
             <span className="font-display text-sm font-bold text-white">D</span>
@@ -60,47 +64,38 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) =>
-            link.to.includes('#') ? (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => handleHashLink(link.to)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
-              >
+        <div className="hidden items-center gap-0.5 lg:flex">
+          {navLinks.map((link) => {
+            const active = isLinkActive(location.pathname, link)
+            return (
+              <Link key={link.to} to={link.to} className={linkClass(active)}>
                 {link.label}
-              </Link>
-            ) : (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-white ${
-                  location.pathname === link.to ? 'text-white' : 'text-white/70'
-                }`}
-              >
-                {link.label}
+                {active && (
+                  <span className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-accent-violet to-accent-cyan" />
+                )}
               </Link>
             )
-          )}
+          })}
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
           {loading ? (
-            <div className="h-9 w-24 animate-pulse rounded-lg bg-white/10" />
+            <div className="h-9 w-28 animate-pulse rounded-lg bg-white/10" />
           ) : user ? (
             <>
               <Link
                 to="/orders"
-                className="rounded-lg px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                className={`${linkClass(location.pathname.startsWith('/orders'))} ${
+                  location.pathname.startsWith('/orders') ? 'text-accent-cyan' : ''
+                }`}
               >
                 Messages
               </Link>
               <Link
                 to="/account"
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-accent-violet/40"
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-accent-violet/40"
               >
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4 text-accent-violet" />
                 @{profile?.username ?? 'account'}
               </Link>
               {isAdmin && (
@@ -154,15 +149,18 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-b border-white/10 bg-midnight-950/95 backdrop-blur-xl lg:hidden"
+            className="border-b border-white/10 bg-midnight-950/98 backdrop-blur-xl lg:hidden"
           >
-            <div className="flex flex-col gap-1 px-4 py-4">
+            <div className="flex max-h-[70vh] flex-col gap-1 overflow-y-auto px-4 py-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  onClick={() => handleHashLink(link.to)}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-white/80 hover:bg-white/5 hover:text-white"
+                  className={`rounded-lg px-4 py-3 text-sm font-medium ${
+                    isLinkActive(location.pathname, link)
+                      ? 'bg-accent-violet/15 text-white'
+                      : 'text-white/80 hover:bg-white/5'
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -174,7 +172,7 @@ export function Navbar() {
                     My Orders & Messages
                   </Link>
                   <Link to="/account" className="rounded-lg px-4 py-3 text-sm text-white/80">
-                    My Account (@{profile?.username ?? 'account'})
+                    Account (@{profile?.username ?? 'account'})
                   </Link>
                   {isAdmin && (
                     <Link to="/admin" className="rounded-lg px-4 py-3 text-sm text-accent-violet">
@@ -200,7 +198,7 @@ export function Navbar() {
                   </Link>
                   <Link
                     to="/signup"
-                    className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-violet to-accent-purple px-4 py-3 text-sm font-semibold text-white"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-violet to-accent-purple px-4 py-3 text-sm font-semibold text-white"
                   >
                     <UserPlus className="h-4 w-4" />
                     Create Account
