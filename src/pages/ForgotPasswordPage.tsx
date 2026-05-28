@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, ShieldCheck, Lock, KeyRound, Eye, EyeOff } from 'lucide-react'
@@ -21,6 +21,8 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
+  const [requestCooldown, setRequestCooldown] = useState(0)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const { requestPasswordResetOtp, resetPasswordWithOtp, isConfigured } = useAuth()
   const navigate = useNavigate()
 
@@ -28,17 +30,41 @@ export function ForgotPasswordPage() {
     'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none'
   const labelClass = 'mb-2 block text-sm font-medium text-white/80'
 
+  useEffect(() => {
+    if (requestCooldown <= 0) return
+    const timer = setInterval(() => {
+      setRequestCooldown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [requestCooldown])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [resendCooldown])
+
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (requestCooldown > 0) {
+      setError(`Please wait ${requestCooldown}s before requesting another OTP.`)
+      return
+    }
     setLoading(true)
     const { error: requestError } = await requestPasswordResetOtp(email)
     setLoading(false)
     if (requestError) {
       setError(requestError)
+      if (requestError.toLowerCase().includes('too many attempts') || requestError.toLowerCase().includes('too many requests')) {
+        setRequestCooldown(60)
+      }
       return
     }
     setStep('verify')
+    setResendCooldown(30)
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -71,11 +97,19 @@ export function ForgotPasswordPage() {
   }
 
   const handleResendOtp = async () => {
+    if (resendCooldown > 0) return
     setError('')
     setResending(true)
     const { error: resendError } = await requestPasswordResetOtp(email)
     setResending(false)
-    if (resendError) setError(resendError)
+    if (resendError) {
+      setError(resendError)
+      if (resendError.toLowerCase().includes('too many attempts') || resendError.toLowerCase().includes('too many requests')) {
+        setResendCooldown(60)
+      }
+      return
+    }
+    setResendCooldown(30)
   }
 
   return (
@@ -210,13 +244,19 @@ export function ForgotPasswordPage() {
                 </>
               )}
 
-              <GradientButton type="submit" className="w-full" disabled={loading}>
+              <GradientButton
+                type="submit"
+                className="w-full"
+                disabled={loading || (step === 'request' && requestCooldown > 0)}
+              >
                 {loading
                   ? step === 'request'
                     ? 'Sending OTP…'
                     : 'Resetting password…'
                   : step === 'request'
-                    ? 'Send Reset OTP'
+                    ? requestCooldown > 0
+                      ? `Send Reset OTP in ${requestCooldown}s`
+                      : 'Send Reset OTP'
                     : 'Verify OTP & Reset Password'}
               </GradientButton>
 
@@ -224,10 +264,14 @@ export function ForgotPasswordPage() {
                 <button
                   type="button"
                   onClick={handleResendOtp}
-                  disabled={resending}
+                  disabled={resending || resendCooldown > 0}
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white/80 transition-colors hover:border-accent-violet/40 hover:text-white disabled:opacity-60"
                 >
-                  {resending ? 'Resending OTP…' : 'Resend OTP'}
+                  {resending
+                    ? 'Resending OTP…'
+                    : resendCooldown > 0
+                      ? `Resend OTP in ${resendCooldown}s`
+                      : 'Resend OTP'}
                 </button>
               )}
 
