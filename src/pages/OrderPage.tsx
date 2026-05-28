@@ -24,6 +24,7 @@ import { GradientButton } from '../components/ui/GradientButton'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { PaymentInstructions } from '../components/order/PaymentInstructions'
 import { useProducts } from '../hooks/useProducts'
+import { withTimeout } from '../utils/asyncHelpers'
 
 export function OrderPage() {
   const { products: liveProducts } = useProducts()
@@ -92,65 +93,84 @@ export function OrderPage() {
     }
 
     setSubmitting(true)
+    try {
+      const result = await withTimeout(
+        supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            product_id: selectedProduct.id,
+            product_name: selectedProduct.name,
+            amount: selectedProduct.price,
+            payment_method: form.paymentMethod,
+            notes: form.notes || null,
+            status: 'pending',
+          })
+          .select('id')
+          .single() as unknown as Promise<{
+            data: { id: string } | null
+            error: { message: string } | null
+          }>,
+        15000,
+        'Order submission timed out. Please try again.'
+      )
+      const { data, error } = result
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        user_id: user.id,
-        product_id: selectedProduct.id,
-        product_name: selectedProduct.name,
-        amount: selectedProduct.price,
-        payment_method: form.paymentMethod,
-        notes: form.notes || null,
-        status: 'pending',
-      })
-      .select('id')
-      .single()
+      if (error || !data) {
+        const hint = error?.message?.toLowerCase().includes('violates foreign key')
+          ? ' Your profile row might be missing in Supabase. Run username migration SQL and sign out/sign in.'
+          : ''
+        setSubmitError((error?.message ?? 'Could not save order. Please try again.') + hint)
+        return
+      }
 
-    if (error || !data) {
-      const hint = error?.message?.toLowerCase().includes('violates foreign key')
-        ? ' Your profile row might be missing in Supabase. Run username migration SQL and sign out/sign in.'
-        : ''
-      setSubmitError((error?.message ?? 'Could not save order. Please try again.') + hint)
+      const orderId = data.id
+      const { url: proofUrl, error: proofError } = await withTimeout(
+        uploadPaymentProof(form.proofFile, user.id, orderId),
+        20000,
+        'Payment proof upload timed out. Please retry.'
+      )
+
+      if (proofUrl) {
+        await withTimeout(
+          supabase.from('orders').update({ proof_url: proofUrl }).eq('id', orderId),
+          10000,
+          'Saving payment proof link timed out.'
+        )
+      }
+
+      const proofNote = proofUrl
+        ? 'Payment proof uploaded.'
+        : proofError
+          ? `Payment proof upload failed (${proofError}) — please send screenshot in chat.`
+          : ''
+
+      await withTimeout(
+        supabase.from('order_messages').insert({
+          order_id: orderId,
+          sender_id: user.id,
+          sender_role: 'customer',
+          body: [
+            `New order: ${selectedProduct.name}`,
+            `Payment: ${form.paymentMethod}`,
+            `Amount: ${formatPrice(selectedProduct.price)}`,
+            proofNote,
+            form.notes ? `Notes: ${form.notes}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        }),
+        10000,
+        'Opening order chat timed out.'
+      )
+
+      setSubmitted(true)
+      setTimeout(() => navigate(`/orders/${orderId}`), 2000)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Order submit failed. Please try again.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    const orderId = data.id
-    const { url: proofUrl, error: proofError } = await uploadPaymentProof(
-      form.proofFile,
-      user.id,
-      orderId
-    )
-
-    if (proofUrl) {
-      await supabase.from('orders').update({ proof_url: proofUrl }).eq('id', orderId)
-    }
-
-    const proofNote = proofUrl
-      ? 'Payment proof uploaded.'
-      : proofError
-        ? `Payment proof upload failed (${proofError}) — please send screenshot in chat.`
-        : ''
-
-    await supabase.from('order_messages').insert({
-      order_id: orderId,
-      sender_id: user.id,
-      sender_role: 'customer',
-      body: [
-        `New order: ${selectedProduct.name}`,
-        `Payment: ${form.paymentMethod}`,
-        `Amount: ${formatPrice(selectedProduct.price)}`,
-        proofNote,
-        form.notes ? `Notes: ${form.notes}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    })
-
-    setSubmitting(false)
-    setSubmitted(true)
-    setTimeout(() => navigate(`/orders/${orderId}`), 2000)
   }
 
   const inputClass =

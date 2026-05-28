@@ -8,13 +8,22 @@ import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { withTimeout } from '../utils/asyncHelpers'
 
 async function checkIsAdmin(userId: string): Promise<{ isAdmin: boolean; errorMessage?: string }> {
   if (!supabase) return { isAdmin: false, errorMessage: 'No Supabase client' }
 
   // Avoid selecting directly from `profiles` here (RLS policies can recurse in some setups).
   // This RPC should run as SECURITY DEFINER and return a boolean.
-  const { data, error } = await supabase.rpc('is_admin_uid', { uid: userId })
+  const result = await withTimeout(
+    supabase.rpc('is_admin_uid', { uid: userId }) as unknown as Promise<{
+      data: boolean | null
+      error: { message: string } | null
+    }>,
+    12000,
+    'Admin check timed out. Please try again.'
+  )
+  const { data, error } = result
   if (error) {
     if (error.message.toLowerCase().includes('does not exist')) {
       return {
@@ -41,33 +50,45 @@ export function AdminLoginPage() {
     setError('')
     setLoading(true)
 
-    const { error: err } = await signIn(email, password)
-    if (err) {
-      setLoading(false)
-      setError(err)
-      return
-    }
-
-    const { data: { user } } = await supabase!.auth.getUser()
-    if (!user) {
-      await signOut()
-      setLoading(false)
-      setError('Could not get user. Please try again.')
-      return
-    }
-
-    const check = await checkIsAdmin(user.id)
-    if (!check.isAdmin) {
-      await signOut()
-      setLoading(false)
-      setError(
-        `Access denied. ${check.errorMessage ? `(${check.errorMessage})` : 'This account is not set as admin role in profiles table.'}`
+    try {
+      const { error: err } = await withTimeout(
+        signIn(email, password),
+        12000,
+        'Sign-in timed out. Check your internet and Supabase status.'
       )
-      return
-    }
+      if (err) {
+        setError(err)
+        return
+      }
 
-    setLoading(false)
-    navigate('/admin', { replace: true })
+      const {
+        data: { user },
+      } = await withTimeout(
+        supabase!.auth.getUser(),
+        12000,
+        'Fetching user timed out.'
+      )
+      if (!user) {
+        await signOut()
+        setError('Could not get user. Please try again.')
+        return
+      }
+
+      const check = await checkIsAdmin(user.id)
+      if (!check.isAdmin) {
+        await signOut()
+        setError(
+          `Access denied. ${check.errorMessage ? `(${check.errorMessage})` : 'This account is not set as admin role in profiles table.'}`
+        )
+        return
+      }
+
+      navigate('/admin', { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Admin login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

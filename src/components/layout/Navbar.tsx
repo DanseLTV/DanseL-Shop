@@ -56,9 +56,14 @@ export function Navbar() {
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         <Link to="/" className="group flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-violet to-accent-cyan shadow-glow">
-            <span className="font-display text-sm font-bold text-white">D</span>
-          </div>
+          <img
+            src="/shop-logo.png"
+            alt="Dansel Shop logo"
+            className="h-10 w-10 rounded-xl border border-white/10 object-cover shadow-glow"
+            onError={(e) => {
+              ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+            }}
+          />
           <span className="font-display text-lg font-bold tracking-wider text-white group-hover:text-accent-violet transition-colors">
             DANSEL <span className="gradient-text">SHOP</span>
           </span>

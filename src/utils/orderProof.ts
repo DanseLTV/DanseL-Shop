@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { withTimeout } from './asyncHelpers'
 
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
@@ -25,9 +26,13 @@ export async function uploadPaymentProof(
   const safeExt = ext.replace(/[^a-z0-9]/g, '') || 'jpg'
   const path = `${userId}/${orderId}.${safeExt}`
 
-  const { error: uploadError } = await supabase.storage
-    .from('payment-proofs')
-    .upload(path, file, { upsert: true, contentType: file.type || undefined })
+  const { error: uploadError } = await withTimeout(
+    supabase.storage
+      .from('payment-proofs')
+      .upload(path, file, { upsert: true, contentType: file.type || undefined }),
+    15000,
+    'Payment proof storage upload timed out.'
+  )
 
   if (uploadError) {
     return { url: null, error: uploadError.message }

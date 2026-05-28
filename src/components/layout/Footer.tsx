@@ -31,9 +31,14 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-violet to-accent-cyan">
-                <span className="font-display text-sm font-bold">D</span>
-              </div>
+              <img
+                src="/shop-logo.png"
+                alt="Dansel Shop logo"
+                className="h-10 w-10 rounded-xl border border-white/10 object-cover"
+                onError={(e) => {
+                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                }}
+              />
               <span className="font-display text-lg font-bold tracking-wider">
                 DANSEL <span className="gradient-text">SHOP</span>
               </span>
