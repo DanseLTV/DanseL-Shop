@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, User, UserPlus, ShieldCheck, Eye, EyeOff } from 'lucide-react'
@@ -26,28 +26,10 @@ export function SignupPage() {
   const [otpCode, setOtpCode] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
   const [resendingOtp, setResendingOtp] = useState(false)
-  const [signupCooldown, setSignupCooldown] = useState(0)
-  const [resendOtpCooldown, setResendOtpCooldown] = useState(0)
   const { signUp, verifySignupOtp, resendSignupOtp, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
-
-  useEffect(() => {
-    if (signupCooldown <= 0) return
-    const timer = setInterval(() => {
-      setSignupCooldown((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [signupCooldown])
-
-  useEffect(() => {
-    if (resendOtpCooldown <= 0) return
-    const timer = setInterval(() => {
-      setResendOtpCooldown((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [resendOtpCooldown])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -56,10 +38,6 @@ export function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (signupCooldown > 0) {
-      setError(`Please wait ${signupCooldown}s before trying signup again.`)
-      return
-    }
 
     const normalized = normalizeUsername(form.username)
     if (!isValidUsername(normalized)) {
@@ -88,16 +66,12 @@ export function SignupPage() {
 
     if (err) {
       setError(err)
-      if (err.toLowerCase().includes('too many attempts') || err.toLowerCase().includes('too many requests')) {
-        setSignupCooldown(60)
-      }
       return
     }
 
     setSignupEmail(email ?? form.email.trim().toLowerCase())
     setStep('otp')
     setError('')
-    setResendOtpCooldown(30)
   }
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -126,19 +100,14 @@ export function SignupPage() {
 
   const handleResendOtp = async () => {
     if (!signupEmail) return
-    if (resendOtpCooldown > 0) return
     setResendingOtp(true)
     setError('')
     const { error: resendError } = await resendSignupOtp(signupEmail)
     setResendingOtp(false)
     if (resendError) {
       setError(resendError)
-      if (resendError.toLowerCase().includes('too many attempts') || resendError.toLowerCase().includes('too many requests')) {
-        setResendOtpCooldown(60)
-      }
       return
     }
-    setResendOtpCooldown(30)
   }
 
   const inputClass =
@@ -218,14 +187,10 @@ export function SignupPage() {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                disabled={resendingOtp || resendOtpCooldown > 0}
+                disabled={resendingOtp}
                 className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white/80 transition-colors hover:border-accent-violet/40 hover:text-white disabled:opacity-60"
               >
-                {resendingOtp
-                  ? 'Resending OTP…'
-                  : resendOtpCooldown > 0
-                    ? `Resend OTP in ${resendOtpCooldown}s`
-                    : 'Resend OTP'}
+                {resendingOtp ? 'Resending OTP…' : 'Resend OTP'}
               </button>
             </motion.form>
           ) : (
@@ -356,14 +321,10 @@ export function SignupPage() {
               <GradientButton
                 type="submit"
                 className="w-full"
-                disabled={loading || !agreedToTerms || signupCooldown > 0}
+                disabled={loading || !agreedToTerms}
               >
                 <UserPlus className="h-4 w-4" />
-                {loading
-                  ? 'Creating account…'
-                  : signupCooldown > 0
-                    ? `Please wait ${signupCooldown}s`
-                    : 'Sign Up'}
+                {loading ? 'Creating account…' : 'Sign Up'}
               </GradientButton>
 
               <p className="text-center text-sm text-white/50">

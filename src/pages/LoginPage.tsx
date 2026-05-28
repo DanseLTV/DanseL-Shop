@@ -16,7 +16,6 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loginEmail, setLoginEmail] = useState<string | null>(null)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
-  const [resendCooldown, setResendCooldown] = useState(0)
   const [loading, setLoading] = useState(false)
   const { signIn, resendConfirmationEmail, isConfigured, user, loading: authLoading } =
     useAuth()
@@ -31,14 +30,6 @@ export function LoginPage() {
       navigate(decodeURIComponent(redirect), { replace: true })
     }
   }, [authLoading, user, redirect, navigate])
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [resendCooldown])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,19 +52,15 @@ export function LoginPage() {
   }
 
   const handleResend = async () => {
-    if (!loginEmail || resendCooldown > 0) return
+    if (!loginEmail) return
     setResendStatus('sending')
     const { error: resendError } = await resendConfirmationEmail(loginEmail)
     if (resendError) {
       setError(resendError)
       setResendStatus('idle')
-      if (resendError.toLowerCase().includes('too many attempts') || resendError.toLowerCase().includes('too many requests')) {
-        setResendCooldown(60)
-      }
       return
     }
     setResendStatus('sent')
-    setResendCooldown(30)
   }
 
   return (
@@ -113,20 +100,14 @@ export function LoginPage() {
                       <button
                         type="button"
                         onClick={handleResend}
-                        disabled={
-                          resendStatus === 'sending' ||
-                          resendStatus === 'sent' ||
-                          resendCooldown > 0
-                        }
+                        disabled={resendStatus === 'sending' || resendStatus === 'sent'}
                         className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent-violet hover:text-accent-cyan disabled:opacity-60"
                       >
                         <Mail className="h-4 w-4" />
-                        {resendStatus === 'sent' && resendCooldown <= 0
+                        {resendStatus === 'sent'
                           ? 'Confirmation email sent — check inbox & spam'
                           : resendStatus === 'sending'
                             ? 'Sending…'
-                            : resendCooldown > 0
-                              ? `Resend in ${resendCooldown}s`
                             : 'Resend confirmation email'}
                       </button>
                     )}
