@@ -62,7 +62,7 @@ export function AccountPage() {
         </ScrollReveal>
 
         <p className="mt-6 text-center text-sm text-white/40">
-          <Link to="/shop" className="text-accent-violet hover:underline">
+          <Link to="/" className="text-accent-violet hover:underline">
             ← Back to shop
           </Link>
         </p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Package, MessageCircle, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, type OrderRecord } from '../lib/supabase'
 import { formatPrice } from '../data/products'
@@ -10,6 +10,10 @@ import { SectionHeading } from '../components/ui/SectionHeading'
 import { GlassCard } from '../components/ui/GlassCard'
 import { OrderChat } from '../components/messages/OrderChat'
 import { GradientButton } from '../components/ui/GradientButton'
+import { OrderStatusBadge } from '../components/order/OrderStatusBadge'
+import { OrderProgress } from '../components/order/OrderProgress'
+import { PaymentProofViewer } from '../components/order/PaymentProofViewer'
+import { useOrderNavigation } from '../hooks/useOrderNavigation'
 
 function hasUnreadForCustomer(order: OrderRecord, lastMessageAt?: string) {
   if (!lastMessageAt) return false
@@ -22,6 +26,7 @@ export function MyOrdersPage() {
   const { orderId: paramOrderId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const goToOrder = useOrderNavigation()
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [lastAdminMessageAt, setLastAdminMessageAt] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
@@ -94,19 +99,25 @@ export function MyOrdersPage() {
     <div className="relative min-h-screen pt-24">
       <AnimatedBackground />
       <div className="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <Link
-          to="/account"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-white/50 hover:text-accent-violet"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to account
-        </Link>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <Link
+            to="/account"
+            className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-accent-violet"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to account
+          </Link>
+          <GradientButton onClick={() => goToOrder()} size="sm">
+            <Plus className="h-4 w-4" />
+            New order
+          </GradientButton>
+        </div>
 
         <ScrollReveal>
           <SectionHeading
             badge="Orders"
             title="My Orders & Messages"
-            subtitle="Chat with DANSEL SHOP admin about your orders — no need to leave the site."
+            subtitle="Track payment verification, chat with admin, and receive your product — all in one place."
             align="left"
           />
         </ScrollReveal>
@@ -118,18 +129,26 @@ export function MyOrdersPage() {
         )}
 
         {loading ? (
-          <p className="text-white/50">Loading…</p>
+          <div className="flex min-h-[40vh] items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-violet border-t-transparent" />
+          </div>
         ) : orders.length === 0 ? (
           <GlassCard className="p-8 text-center">
             <Package className="mx-auto h-10 w-10 text-white/30" />
             <p className="mt-4 text-white/60">You have no orders yet.</p>
-            <GradientButton to="/order" className="mt-6">
+            <p className="mt-2 text-sm text-white/40">
+              Browse the shop, pick a product, and checkout when you&apos;re ready.
+            </p>
+            <GradientButton onClick={() => goToOrder()} className="mt-6">
               Place your first order
             </GradientButton>
           </GlassCard>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_1fr]">
-            <div className="space-y-2">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
+            <div className="space-y-2 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-white/40">
+                Your orders ({orders.length})
+              </p>
               {orders.map((order) => {
                 const unread = hasUnreadForCustomer(order, lastAdminMessageAt[order.id])
                 const active = order.id === selectedId
@@ -145,16 +164,19 @@ export function MyOrdersPage() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-white">{order.product_name}</p>
+                      <p className="font-medium text-white line-clamp-1">{order.product_name}</p>
                       {unread && (
                         <span className="shrink-0 rounded-full bg-accent-cyan/20 px-2 py-0.5 text-[10px] font-bold text-accent-cyan">
                           New
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-white/50">
-                      {formatPrice(Number(order.amount))} · {order.status}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <OrderStatusBadge status={order.status} />
+                      <span className="text-xs text-white/50">
+                        {formatPrice(Number(order.amount))}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs text-white/40">
                       {new Date(order.created_at).toLocaleString()}
                     </p>
@@ -166,30 +188,38 @@ export function MyOrdersPage() {
             {selected && (
               <div className="space-y-4">
                 <GlassCard className="p-4 sm:p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-display text-lg font-semibold text-white">
                         {selected.product_name}
                       </p>
                       <p className="text-sm text-white/50">
-                        Order #{selected.id.slice(0, 8)} · {selected.status}
+                        Order #{selected.id.slice(0, 8)} · {selected.payment_method} ·{' '}
+                        {formatPrice(Number(selected.amount))}
                       </p>
                     </div>
-                    <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/60">
-                      {selected.payment_method}
-                    </span>
+                    <OrderStatusBadge status={selected.status} size="md" />
                   </div>
+                  <div className="mt-4 border-t border-white/10 pt-4">
+                    <OrderProgress status={selected.status} />
+                  </div>
+                </GlassCard>
+
+                <GlassCard className="p-4">
+                  <PaymentProofViewer proofUrl={selected.proof_url} />
                 </GlassCard>
 
                 <OrderChat
                   orderId={selected.id}
                   viewerRole="customer"
                   title="Chat with Admin"
+                  className="min-h-[360px]"
+                  onMessageSent={loadOrders}
                 />
 
                 <p className="flex items-center gap-2 text-xs text-white/40">
                   <MessageCircle className="h-3.5 w-3.5" />
-                  You can also reach us on Telegram if needed — but we reply here first.
+                  Admin usually replies within 15–60 minutes. Send account questions here.
                 </p>
               </div>
             )}

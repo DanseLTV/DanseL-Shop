@@ -68,19 +68,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   if (!supabase) return null
   try {
-    const query = supabase
-      .from('profiles')
-      .select('id, username, email, full_name, phone, role, created_at')
-      .eq('id', userId)
-      .maybeSingle()
-
-    const result = await withTimeout(
-      Promise.resolve(query) as Promise<{ data: unknown; error: unknown }>,
+    const { data, error } = await withTimeout(
+      supabase
+        .from('profiles')
+        .select('id, username, email, full_name, phone, role, created_at')
+        .eq('id', userId)
+        .maybeSingle(),
       PROFILE_FETCH_TIMEOUT_MS,
       { data: null, error: { message: 'Profile fetch timed out' } }
     )
-
-    const { data, error } = result as { data: unknown; error: unknown }
     if (error || !data) {
       if (error) console.warn('fetchProfile error', error)
       return null

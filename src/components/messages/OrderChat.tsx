@@ -10,6 +10,7 @@ interface OrderChatProps {
   viewerRole: UserRole
   title?: string
   className?: string
+  onMessageSent?: () => void
 }
 
 export function OrderChat({
@@ -17,6 +18,7 @@ export function OrderChat({
   viewerRole,
   title = 'Messages',
   className = '',
+  onMessageSent,
 }: OrderChatProps) {
   const { user } = useAuth()
   const [draft, setDraft] = useState('')
@@ -26,7 +28,10 @@ export function OrderChat({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const ok = await sendMessage(draft)
-    if (ok) setDraft('')
+    if (ok) {
+      setDraft('')
+      onMessageSent?.()
+    }
   }
 
   return (
@@ -34,7 +39,9 @@ export function OrderChat({
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
         <MessageCircle className="h-5 w-5 text-accent-violet" />
         <h3 className="font-display text-sm font-semibold text-white">{title}</h3>
-        <span className="ml-auto text-xs text-white/40">Live chat with admin</span>
+        <span className="ml-auto text-xs text-white/40">
+          {viewerRole === 'admin' ? 'Customer inbox' : 'Live · in-site chat'}
+        </span>
       </div>
 
       <div className="flex max-h-80 min-h-[200px] flex-1 flex-col overflow-y-auto px-4 py-3">

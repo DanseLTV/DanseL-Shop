@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, LogIn, UserPlus } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { GradientButton } from '../ui/GradientButton'
 
 const navLinks = [
   { label: 'Shop', to: '/' },
@@ -17,7 +18,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, signOut, isAdmin, loading } = useAuth()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -85,7 +86,9 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {user ? (
+          {loading ? (
+            <div className="h-9 w-24 animate-pulse rounded-lg bg-white/10" />
+          ) : user ? (
             <>
               <Link
                 to="/orders"
@@ -98,7 +101,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-accent-violet/40"
               >
                 <User className="h-4 w-4" />
-                {profile?.username ?? 'Account'}
+                @{profile?.username ?? 'account'}
               </Link>
               {isAdmin && (
                 <Link
@@ -118,7 +121,21 @@ export function Navbar() {
                 <LogOut className="h-4 w-4" />
               </button>
             </>
-          ) : null}
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+              <GradientButton to="/signup" size="sm">
+                <UserPlus className="h-4 w-4" />
+                Sign Up
+              </GradientButton>
+            </>
+          )}
         </div>
 
         <button
@@ -150,13 +167,14 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              {user ? (
+              <div className="my-2 border-t border-white/10" />
+              {loading ? null : user ? (
                 <>
                   <Link to="/orders" className="rounded-lg px-4 py-3 text-sm text-white/80">
                     My Orders & Messages
                   </Link>
                   <Link to="/account" className="rounded-lg px-4 py-3 text-sm text-white/80">
-                    My Account
+                    My Account (@{profile?.username ?? 'account'})
                   </Link>
                   {isAdmin && (
                     <Link to="/admin" className="rounded-lg px-4 py-3 text-sm text-accent-violet">
@@ -171,7 +189,24 @@ export function Navbar() {
                     Sign Out
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent-violet to-accent-purple px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Create Account
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

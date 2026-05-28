@@ -17,6 +17,7 @@ import type { PaymentMethod } from '../types'
 import { enabledPaymentMethods, shopPayments } from '../data/shopPayments'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { uploadPaymentProof, validateProofFile } from '../utils/orderProof'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { GradientButton } from '../components/ui/GradientButton'
@@ -62,47 +63,87 @@ export function OrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError('')
+
+    if (!supabase || !user) {
+      setSubmitError('Please sign in to place an order.')
+      return
+    }
+    if (!selectedProduct) {
+      setSubmitError('Please select a product.')
+      return
+    }
+    if (!form.paymentMethod) {
+      setSubmitError('Please select a payment method.')
+      return
+    }
+    if (!form.proofFile) {
+      setSubmitError('Please upload your payment proof screenshot.')
+      return
+    }
+
+    const proofValidation = validateProofFile(form.proofFile)
+    if (proofValidation) {
+      setSubmitError(proofValidation)
+      return
+    }
+
     setSubmitting(true)
 
-    let createdOrderId: string | null = null
-
-    if (supabase && user && selectedProduct) {
-      const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          product_id: selectedProduct.id,
-          product_name: selectedProduct.name,
-          amount: selectedProduct.price,
-          payment_method: form.paymentMethod,
-          notes: form.notes || null,
-          status: 'pending',
-        })
-        .select('id')
-        .single()
-
-      if (error || !data) {
-        setSubmitError('Could not save order. Please try again.')
-        setSubmitting(false)
-        return
-      }
-
-      createdOrderId = data.id
-
-      await supabase.from('order_messages').insert({
-        order_id: data.id,
-        sender_id: user.id,
-        sender_role: 'customer',
-        body: `New order placed for ${selectedProduct.name} via ${form.paymentMethod}.${form.notes ? ` Notes: ${form.notes}` : ''}`,
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        product_id: selectedProduct.id,
+        product_name: selectedProduct.name,
+        amount: selectedProduct.price,
+        payment_method: form.paymentMethod,
+        notes: form.notes || null,
+        status: 'pending',
       })
+      .select('id')
+      .single()
+
+    if (error || !data) {
+      setSubmitError(error?.message ?? 'Could not save order. Please try again.')
+      setSubmitting(false)
+      return
     }
+
+    const orderId = data.id
+    const { url: proofUrl, error: proofError } = await uploadPaymentProof(
+      form.proofFile,
+      user.id,
+      orderId
+    )
+
+    if (proofUrl) {
+      await supabase.from('orders').update({ proof_url: proofUrl }).eq('id', orderId)
+    }
+
+    const proofNote = proofUrl
+      ? 'Payment proof uploaded.'
+      : proofError
+        ? `Payment proof upload failed (${proofError}) — please send screenshot in chat.`
+        : ''
+
+    await supabase.from('order_messages').insert({
+      order_id: orderId,
+      sender_id: user.id,
+      sender_role: 'customer',
+      body: [
+        `New order: ${selectedProduct.name}`,
+        `Payment: ${form.paymentMethod}`,
+        `Amount: ${formatPrice(selectedProduct.price)}`,
+        proofNote,
+        form.notes ? `Notes: ${form.notes}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    })
 
     setSubmitting(false)
     setSubmitted(true)
-
-    if (createdOrderId) {
-      setTimeout(() => navigate(`/orders/${createdOrderId}`), 2500)
-    }
+    setTimeout(() => navigate(`/orders/${orderId}`), 2000)
   }
 
   const inputClass =

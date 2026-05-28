@@ -30,6 +30,7 @@ export interface OrderRecord {
   amount: number
   payment_method: string
   notes: string | null
+  proof_url?: string | null
   status: 'pending' | 'paid' | 'delivered' | 'cancelled'
   created_at: string
   customer_last_read_at?: string | null

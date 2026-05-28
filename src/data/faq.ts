@@ -5,7 +5,7 @@ export const faqItems: FAQItem[] = [
     id: '1',
     question: 'How do I place an order?',
     answer:
-      'Browse our shop, select your desired product, then fill out the order form with your name, contact details, and payment method. Upload your proof of payment and wait for confirmation — we typically process orders within 15–60 minutes during business hours.',
+      'Browse the shop (no login needed), tap Order on a product, then sign in or create an account. Pay via GCash or Maya, upload your payment screenshot, and submit. Track status and chat with admin in My Orders — usually processed within 15–60 minutes.',
   },
   {
     id: '2',
@@ -17,13 +17,13 @@ export const faqItems: FAQItem[] = [
     id: '3',
     question: 'What payment methods do you accept?',
     answer:
-      'We accept GCash, Maya, Bank Transfer, and PayPal. Payment details will be provided after you submit your order form. Always include your order reference when sending payment.',
+      'We accept GCash and Maya (shown on the checkout page with QR and account number). Upload your payment proof when placing the order so admin can verify faster.',
   },
   {
     id: '4',
     question: 'How long does delivery take?',
     answer:
-      'Most orders are delivered within 15–60 minutes after payment verification. During peak hours or holidays, delivery may take up to 2–4 hours. You will receive your account details via your provided contact method.',
+      'Most orders are delivered within 15–60 minutes after payment verification. During peak hours, it may take up to 2–4 hours. Account details are sent in your order chat under My Orders.',
   },
   {
     id: '5',

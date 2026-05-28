@@ -11,8 +11,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-violet border-t-transparent" />
+        <p className="text-sm text-white/40">Loading your account…</p>
       </div>
     )
   }

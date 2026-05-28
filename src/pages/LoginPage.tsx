@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Lock, LogIn } from 'lucide-react'
@@ -13,10 +13,16 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, isConfigured } = useAuth()
+  const { signIn, isConfigured, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(decodeURIComponent(redirect), { replace: true })
+    }
+  }, [authLoading, user, redirect, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

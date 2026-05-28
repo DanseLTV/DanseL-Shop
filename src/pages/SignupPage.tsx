@@ -214,7 +214,10 @@ export function SignupPage() {
 
               <p className="text-center text-sm text-white/50">
                 Already have an account?{' '}
-                <Link to="/login" className="font-medium text-accent-violet hover:text-accent-cyan">
+                <Link
+                  to={`/login?redirect=${encodeURIComponent(redirect)}`}
+                  className="font-medium text-accent-violet hover:text-accent-cyan"
+                >
                   Sign in
                 </Link>
               </p>

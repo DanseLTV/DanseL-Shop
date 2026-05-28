@@ -4,16 +4,16 @@ import { shopContact } from '../../data/shopContact'
 
 const footerLinks = {
   shop: [
-    { label: 'All Products', to: '/shop' },
+    { label: 'All Products', to: '/' },
     { label: 'Streaming', to: '/shop?category=Streaming' },
     { label: 'AI Tools', to: '/shop?category=AI Tools' },
     { label: 'Writing Tools', to: '/shop?category=Writing Tools' },
   ],
   support: [
-    { label: 'FAQ', to: '/#faq' },
-    { label: 'Reviews', to: '/#reviews' },
-    { label: 'How to Order', to: '/#how-to-order' },
-    { label: 'Contact', to: '/#contact' },
+    { label: 'FAQ', to: '/home#faq' },
+    { label: 'Reviews', to: '/home#reviews' },
+    { label: 'How to Order', to: '/home#how-to-order' },
+    { label: 'Contact', to: '/home#contact' },
   ],
   legal: [
     { label: 'Policies', to: '/policies' },

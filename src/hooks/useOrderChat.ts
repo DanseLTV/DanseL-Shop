@@ -77,7 +77,7 @@ export function useOrderChat(orderId: string | null, viewerRole: UserRole) {
             if (prev.some((m) => m.id === row.id)) return prev
             return [...prev, row]
           })
-          markRead()
+          void markRead()
         }
       )
       .subscribe()

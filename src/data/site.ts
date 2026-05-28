@@ -22,7 +22,7 @@ export const whyChooseUs = [
   {
     icon: 'Headphones',
     title: 'Responsive Support',
-    description: 'Real human support via Messenger, Telegram, and email. We are here when you need help.',
+    description: 'Message admin directly on the website after you order. Fast replies during business hours.',
   },
   {
     icon: 'LayoutGrid',
@@ -49,7 +49,7 @@ export const orderSteps = [
   },
   {
     step: '04',
-    title: 'Receive Access',
-    description: 'Message us on Telegram with your order details and get access within minutes.',
+    title: 'Chat & Receive',
+    description: 'Open My Orders to chat with admin. Get your account details in the same thread once verified.',
   },
 ]
