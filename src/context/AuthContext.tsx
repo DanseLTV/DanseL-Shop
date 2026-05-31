@@ -14,7 +14,13 @@ import {
 } from '../lib/supabase'
 import { checkIsAdminUid } from '../lib/adminCheck'
 import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
-import { mapAuthError } from '../utils/authErrors'
+import {
+  mapAuthError,
+  isEmailAlreadyVerifiedError,
+  isIgnorableSignupEmailError,
+  isUserAlreadyRegisteredError,
+} from '../utils/authErrors'
+import { normalizeOtpInput } from '../constants/authOtp'
 
 interface SignInResult {
   error: string | null
@@ -232,25 +238,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const resendConfirmationEmail = async (email: string) => {
+    return issueEmailOtp(email, 'signup')
+  }
+
+  const issueEmailOtp = async (email: string, purpose: 'signup' | 'recovery') => {
     if (!supabase) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
     }
 
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email.trim().toLowerCase(),
+    const { error } = await supabase.rpc('issue_email_otp', {
+      p_email: email.trim().toLowerCase(),
+      p_purpose: purpose,
     })
 
     return { error: error ? mapAuthError(error.message) : null }
   }
 
   const requestPasswordResetOtp = async (email: string) => {
-    if (!supabase) {
-      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase())
-    return { error: error ? mapAuthError(error.message) : null }
+    return issueEmailOtp(email, 'recovery')
   }
 
   const resetPasswordWithOtp = async (email: string, token: string, newPassword: string) => {
@@ -258,23 +263,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
-    const normalizedToken = token.trim()
-
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: normalizedEmail,
-      token: normalizedToken,
-      type: 'recovery',
+    const { error } = await supabase.rpc('complete_recovery_with_otp', {
+      p_email: email.trim().toLowerCase(),
+      p_code: normalizeOtpInput(token),
+      p_new_password: newPassword,
     })
 
-    if (verifyError) {
-      return { error: mapAuthError(verifyError.message) }
-    }
-
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
-    })
-    return { error: updateError ? mapAuthError(updateError.message) : null }
+    return { error: error ? mapAuthError(error.message) : null }
   }
 
   const signUp = async (email: string, password: string, username: string) => {
@@ -304,7 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const normalizedEmail = email.trim().toLowerCase()
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
@@ -312,7 +307,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
-    return { error: error ? mapAuthError(error.message) : null, email: normalizedEmail }
+    if (signUpError) {
+      const canContinueToOtp =
+        isIgnorableSignupEmailError(signUpError.message) ||
+        isUserAlreadyRegisteredError(signUpError.message)
+
+      if (!canContinueToOtp) {
+        return { error: mapAuthError(signUpError.message) }
+      }
+    }
+
+    const { error: otpError } = await supabase.rpc('issue_email_otp', {
+      p_email: normalizedEmail,
+      p_purpose: 'signup',
+    })
+
+    if (otpError) {
+      if (isEmailAlreadyVerifiedError(otpError.message)) {
+        return { error: 'This email is already registered. Please sign in instead.' }
+      }
+      return { error: mapAuthError(otpError.message) }
+    }
+
+    return {
+      error: null,
+      email: normalizedEmail,
+    }
   }
 
   const verifySignupOtp = async (email: string, token: string) => {
@@ -320,26 +340,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md' }
     }
 
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: token.trim(),
-      type: 'signup',
+    const { error } = await supabase.rpc('verify_signup_email_otp', {
+      p_email: email.trim().toLowerCase(),
+      p_code: normalizeOtpInput(token),
     })
 
     return { error: error ? mapAuthError(error.message) : null }
   }
 
   const resendSignupOtp = async (email: string) => {
-    if (!supabase) {
-      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
-    }
-
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email.trim().toLowerCase(),
-    })
-
-    return { error: error ? mapAuthError(error.message) : null }
+    return issueEmailOtp(email, 'signup')
   }
 
   const signIn = async (identifier: string, password: string): Promise<SignInResult> => {
