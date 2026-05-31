@@ -8,6 +8,7 @@ import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
 import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
+import { OTP_LENGTH, isCompleteOtp, normalizeOtpInput } from '../constants/authOtp'
 
 export function SignupPage() {
   const [form, setForm] = useState({
@@ -78,8 +79,8 @@ export function SignupPage() {
     e.preventDefault()
     setError('')
 
-    if (otpCode.trim().length < 6) {
-      setError('Please enter the 6-digit OTP sent to your email.')
+    if (!isCompleteOtp(otpCode)) {
+      setError(`Please enter the ${OTP_LENGTH}-digit code sent to your email.`)
       return
     }
 
@@ -147,10 +148,10 @@ export function SignupPage() {
             >
               <div className="rounded-lg border border-accent-violet/30 bg-accent-violet/10 px-4 py-3">
                 <p className="text-sm text-white/80">
-                  We sent a signup OTP code to <span className="font-semibold">{signupEmail}</span>.
+                  We sent a {OTP_LENGTH}-digit code to <span className="font-semibold">{signupEmail}</span>.
                 </p>
                 <p className="mt-1 text-xs text-white/50">
-                  Enter the code below to finish creating your account.
+                  Enter all {OTP_LENGTH} numbers below to finish creating your account.
                 </p>
               </div>
 
@@ -171,10 +172,12 @@ export function SignupPage() {
                   type="text"
                   required
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => setOtpCode(normalizeOtpInput(e.target.value))}
                   className={inputClass}
-                  placeholder="6-digit code"
+                  placeholder={`${OTP_LENGTH}-digit code`}
                   inputMode="numeric"
+                  maxLength={OTP_LENGTH}
+                  pattern="\d{4}"
                   autoComplete="one-time-code"
                 />
               </div>

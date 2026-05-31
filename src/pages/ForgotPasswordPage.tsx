@@ -7,6 +7,7 @@ import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { OTP_LENGTH, isCompleteOtp, normalizeOtpInput } from '../constants/authOtp'
 
 type Step = 'request' | 'verify' | 'done'
 
@@ -45,8 +46,8 @@ export function ForgotPasswordPage() {
     e.preventDefault()
     setError('')
 
-    if (otp.trim().length < 6) {
-      setError('Please enter the 6-digit OTP.')
+    if (!isCompleteOtp(otp)) {
+      setError(`Please enter the ${OTP_LENGTH}-digit code.`)
       return
     }
     if (password.length < 6) {
@@ -147,9 +148,11 @@ export function ForgotPasswordPage() {
                       type="text"
                       required
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onChange={(e) => setOtp(normalizeOtpInput(e.target.value))}
                       className={inputClass}
-                      placeholder="6-digit code"
+                      placeholder={`${OTP_LENGTH}-digit code`}
+                      maxLength={OTP_LENGTH}
+                      pattern="\d{4}"
                       inputMode="numeric"
                       autoComplete="one-time-code"
                     />

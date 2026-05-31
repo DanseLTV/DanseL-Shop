@@ -69,10 +69,26 @@ where id = (select id from auth.users where email = 'your-email@gmail.com');
 | `/admin/login` | Admin login |
 | `/admin` | Admin dashboard |
 
-## Email confirmation
+## Email confirmation (4-digit OTP)
 
-Supabase may require email confirmation by default.
+Signup and forgot-password use a **4-digit code** (not Supabase’s default 6–8 digit token).
 
-To disable for testing: **Authentication** → **Providers** → **Email** → turn off **Confirm email**.
+### One-time Supabase setup
 
-For production, keep confirmation enabled.
+1. **SQL Editor** → run `supabase/schema-email-otp-4.sql` (after `schema-flow-fix.sql`)
+2. **SQL Editor** → run `supabase/setup-vault-resend.sql`  
+   Replace `YOUR_RESEND_API_KEY` with your Resend API key (`re_...`)
+3. **SQL Editor** → run `supabase/verify-email-otp-4.sql`  
+   Expect: `otp_table` = `email_otp_verifications`, 3 functions, `resend_key_configured` = 1
+4. **Authentication** → **Providers** → **Email** → keep **Confirm email** ON  
+   (Users stay unverified until they enter the 4-digit code.)
+5. **Redeploy** the site on Vercel so the latest app code is live.
+
+### Signup test checklist
+
+1. Open `/signup` → create account with a **new email**
+2. Email should show **exactly 4 digits** (subject: “Your DANSEL SHOP signup code”)
+3. Enter **4 digits only** on the verify screen → “Verified successfully!”
+4. Sign in at `/login` with username/email + password
+
+If you still receive a long code from Supabase, ignore it and use the **4-digit** email from Resend. To stop duplicate mails later, add an Auth **Send Email** hook (optional).
