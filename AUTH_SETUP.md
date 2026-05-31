@@ -75,14 +75,16 @@ Signup and forgot-password use a **4-digit code** (not Supabase’s default 6–
 
 ### One-time Supabase setup
 
-1. **SQL Editor** → run `supabase/schema-email-otp-4.sql` (after `schema-flow-fix.sql`)
-2. **SQL Editor** → run `supabase/setup-vault-resend.sql`  
+1. **Authentication** → **Providers** → **Email** → turn **OFF** `Confirm email`  
+   (Supabase SMTP will stop blocking signup; our 4-digit OTP still verifies the account.)
+2. **SQL Editor** → run `supabase/schema-email-otp-4.sql` (after `schema-flow-fix.sql`)
+3. **SQL Editor** → run `supabase/schema-signup-fix.sql`
+4. **SQL Editor** → run `supabase/setup-vault-resend.sql`  
    Replace `YOUR_RESEND_API_KEY` with your Resend API key (`re_...`)
-3. **SQL Editor** → run `supabase/verify-email-otp-4.sql`  
+5. **SQL Editor** → run `supabase/patch-resend-email-fn.sql`
+6. **SQL Editor** → run `supabase/verify-email-otp-4.sql`  
    Expect: `otp_table` = `email_otp_verifications`, 3 functions, `resend_key_configured` = 1
-4. **Authentication** → **Providers** → **Email** → keep **Confirm email** ON  
-   (Users stay unverified until they enter the 4-digit code.)
-5. **Redeploy** the site on Vercel so the latest app code is live.
+7. **Redeploy** the site on Vercel so the latest app code is live.
 
 ### Signup test checklist
 

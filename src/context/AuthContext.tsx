@@ -232,6 +232,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const sessionUser = data.user ?? data.session?.user ?? null
+
+    if (sessionUser && !sessionUser.email_confirmed_at) {
+      await supabase.auth.signOut()
+      return {
+        error: mapAuthError('Email not confirmed'),
+        user: null,
+        loginEmail: email.trim().toLowerCase(),
+      }
+    }
+
     if (sessionUser) setUser(sessionUser)
 
     return { error: null, user: sessionUser, loginEmail: email.trim().toLowerCase() }
@@ -299,13 +309,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const normalizedEmail = email.trim().toLowerCase()
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
         data: { username: normalized, phone: '' },
       },
     })
+
+    const userCreated = Boolean(signUpData?.user?.id)
 
     if (signUpError) {
       const canContinueToOtp =
@@ -314,6 +326,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!canContinueToOtp) {
         return { error: mapAuthError(signUpError.message) }
+      }
+
+      if (!userCreated && isIgnorableSignupEmailError(signUpError.message)) {
+        const { data: exists } = await supabase.rpc('auth_user_exists', {
+          p_email: normalizedEmail,
+        })
+
+        if (!exists) {
+          return {
+            error:
+              'Could not create your account because Supabase failed to send its confirmation email. In Supabase go to Authentication → Providers → Email and turn OFF Confirm email, then try Sign Up again.',
+          }
+        }
       }
     }
 

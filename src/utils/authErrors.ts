@@ -26,6 +26,9 @@ export function mapAuthError(message: string): string {
   if (lower.includes('email rate limit') || lower.includes('too many requests')) {
     return 'Too many attempts. Please wait a few minutes and try again.'
   }
+  if (lower.includes('no account found for this email')) {
+    return 'Account was not created. Please try Sign Up again. If this keeps happening, turn off Confirm email in Supabase Auth settings.'
+  }
 
   return message
 }
