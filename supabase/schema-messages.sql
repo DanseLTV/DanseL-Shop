@@ -71,5 +71,16 @@ create policy "Customers update read on own orders"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Realtime (required for live chat)
-alter publication supabase_realtime add table public.order_messages;
+-- Realtime (required for live chat) — skip if already enabled
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'order_messages'
+  ) then
+    alter publication supabase_realtime add table public.order_messages;
+  end if;
+end $$;

@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react'
 import type { User } from '@supabase/supabase-js'
@@ -13,7 +14,12 @@ import {
   type UserProfile,
 } from '../lib/supabase'
 import { checkIsAdminUid } from '../lib/adminCheck'
-import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
+import {
+  isValidUsername,
+  normalizeUsername,
+  normalizeLoginIdentifier,
+  isAccountVerified,
+} from '../utils/authHelpers'
 import {
   mapAuthError,
   isEmailAlreadyVerifiedError,
@@ -21,6 +27,7 @@ import {
   isUserAlreadyRegisteredError,
 } from '../utils/authErrors'
 import { normalizeOtpInput } from '../constants/authOtp'
+import { withTimeoutOr } from '../utils/asyncHelpers'
 
 interface SignInResult {
   error: string | null
@@ -47,12 +54,15 @@ interface AuthContextValue {
   signInWithEmail: (email: string, password: string) => Promise<SignInResult>
   resendConfirmationEmail: (email: string) => Promise<{ error: string | null }>
   requestPasswordResetOtp: (email: string) => Promise<{ error: string | null }>
+  verifyRecoveryOtp: (email: string, token: string) => Promise<{ error: string | null }>
+  resetPasswordAfterRecovery: (email: string, newPassword: string) => Promise<{ error: string | null }>
   resetPasswordWithOtp: (
     email: string,
     token: string,
     newPassword: string
   ) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  deleteAccount: (username: string) => Promise<{ error: string | null }>
   refreshProfile: () => Promise<void>
   verifyAdmin: (userId?: string) => Promise<boolean>
 }
@@ -71,7 +81,26 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
     phone: (row.phone as string) || '',
     role: row.role as UserProfile['role'],
     created_at: row.created_at as string | undefined,
+    email_verified_at: (row.email_verified_at as string | null | undefined) ?? null,
     full_name: row.full_name as string | undefined,
+  }
+}
+
+function minimalProfileFromUser(sessionUser: User): UserProfile {
+  const meta = sessionUser.user_metadata as { username?: string; phone?: string } | undefined
+  const username =
+    meta?.username ||
+    sessionUser.email?.split('@')[0] ||
+    'user'
+  return {
+    id: sessionUser.id,
+    username: String(username).toLowerCase(),
+    email: sessionUser.email ?? '',
+    phone: meta?.phone ?? '',
+    role: 'customer',
+    email_verified_at: sessionUser.email_confirmed_at
+      ? new Date().toISOString()
+      : null,
   }
 }
 
@@ -80,7 +109,7 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, email, full_name, phone, role, created_at')
+      .select('id, username, email, full_name, phone, role, created_at, email_verified_at')
       .eq('id', userId)
       .maybeSingle()
 
@@ -95,22 +124,82 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   }
 }
 
+async function syncProfileVerification(): Promise<void> {
+  if (!supabase) return
+  try {
+    await Promise.race([
+      supabase.rpc('sync_email_verified_status'),
+      new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+    ])
+  } catch {
+    /* RPC may not exist until patch-login-sync.sql is run */
+  }
+}
+
+async function hydrateSession(sessionUser: User, options?: { fast?: boolean }): Promise<{
+  profile: UserProfile | null
+  verified: boolean
+}> {
+  const profile = await withTimeoutOr(
+    fetchProfile(sessionUser.id),
+    options?.fast ? 6000 : 10000,
+    null
+  )
+
+  if (!isAccountVerified(profile, sessionUser)) {
+    return { profile, verified: false }
+  }
+
+  if (!options?.fast && profile && !profile.email_verified_at && sessionUser.email_confirmed_at) {
+    await syncProfileVerification()
+    const synced = await withTimeoutOr(fetchProfile(sessionUser.id), 5000, null)
+    return { profile: synced ?? profile, verified: true }
+  }
+
+  return {
+    profile: profile ?? minimalProfileFromUser(sessionUser),
+    verified: true,
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
+  })
+}
+
 async function resolveLoginEmail(identifier: string): Promise<string | null> {
   if (!supabase) return null
-  const trimmed = identifier.trim()
-  if (!trimmed) return null
+  const normalized = normalizeLoginIdentifier(identifier)
+  if (!normalized) return null
 
-  if (trimmed.includes('@')) {
-    return trimmed.toLowerCase()
+  if (normalized.includes('@')) {
+    return normalized.toLowerCase()
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_login_email', {
-      identifier: trimmed,
-    })
-
-    if (error || !data) return null
-    return data as string
+    const email = await withTimeoutOr(
+      (async () => {
+        const { data, error } = await supabase.rpc('get_login_email', {
+          identifier: normalized,
+        })
+        if (error || !data) return null
+        return data as string
+      })(),
+      6000,
+      null
+    )
+    return email
   } catch {
     return null
   }
@@ -121,6 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [adminVerified, setAdminVerified] = useState<boolean | null>(null)
+  /** Prevents onAuthStateChange from racing signInWithPassword (Supabase deadlock). */
+  const authInFlightRef = useRef(false)
 
   const verifyAdmin = useCallback(async (userId?: string) => {
     const id = userId ?? user?.id
@@ -156,19 +247,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const init = async () => {
       try {
-        const { data: { session } } = await supabase!.auth.getSession()
+        const { data: { session } } = await withTimeoutOr(
+          supabase!.auth.getSession(),
+          8000,
+          { data: { session: null }, error: null }
+        )
         if (cancelled) return
         const sessionUser = session?.user ?? null
-        setUser(sessionUser)
-        if (sessionUser) {
-          const p = await fetchProfile(sessionUser.id)
-          if (!cancelled) setProfile(p)
-          if (!cancelled && p?.role === 'admin') {
-            setAdminVerified(true)
-          } else if (!cancelled) {
-            const isAdm = await checkIsAdminUid(sessionUser.id)
-            if (!cancelled) setAdminVerified(isAdm.isAdmin)
+        if (!sessionUser) {
+          setUser(null)
+          setProfile(null)
+          return
+        }
+
+        const { profile: p, verified } = await hydrateSession(sessionUser)
+        if (cancelled) return
+
+        if (!verified) {
+          await supabase!.auth.signOut()
+          if (!cancelled) {
+            setUser(null)
+            setProfile(null)
+            setAdminVerified(null)
           }
+          return
+        }
+
+        if (!cancelled) {
+          setUser(sessionUser)
+          setProfile(p)
+        }
+        if (!cancelled && p?.role === 'admin') {
+          setAdminVerified(true)
+        } else if (!cancelled) {
+          const isAdm = await withTimeoutOr(
+            checkIsAdminUid(sessionUser.id),
+            5000,
+            { isAdmin: false }
+          )
+          if (!cancelled) setAdminVerified(isAdm.isAdmin)
         }
       } catch (err) {
         console.warn('Auth init failed', err)
@@ -181,29 +298,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     init()
 
+  // Only handle sign-out here. Sign-in is handled in signInWithEmail to avoid Supabase deadlocks.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== 'SIGNED_OUT') return
       if (cancelled) return
-      const sessionUser = session?.user ?? null
-      setUser(sessionUser)
-      if (sessionUser) {
-        const p = await fetchProfile(sessionUser.id)
-        if (!cancelled) setProfile(p)
-        if (!cancelled && p?.role === 'admin') {
-          setAdminVerified(true)
-        } else if (!cancelled) {
-          const isAdm = await checkIsAdminUid(sessionUser.id)
-          if (!cancelled) setAdminVerified(isAdm.isAdmin)
-        }
-      } else {
-        setProfile(null)
-        setAdminVerified(null)
-      }
-      if (!cancelled) {
-        clearTimeout(safety)
-        setLoading(false)
-      }
+      setUser(null)
+      setProfile(null)
+      setAdminVerified(null)
+      setLoading(false)
     })
 
     return () => {
@@ -218,33 +322,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md', user: null }
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    })
+    const loginEmail = email.trim().toLowerCase()
+    authInFlightRef.current = true
 
-    if (error) {
-      return {
-        error: mapAuthError(error.message),
-        user: null,
-        loginEmail: email.trim().toLowerCase(),
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: loginEmail, password }),
+        15000,
+        'Login timed out. Check your connection and try again.'
+      )
+
+      if (error) {
+        return {
+          error: mapAuthError(error.message),
+          user: null,
+          loginEmail,
+        }
       }
-    }
 
-    const sessionUser = data.user ?? data.session?.user ?? null
-
-    if (sessionUser && !sessionUser.email_confirmed_at) {
-      await supabase.auth.signOut()
-      return {
-        error: mapAuthError('Email not confirmed'),
-        user: null,
-        loginEmail: email.trim().toLowerCase(),
+      const sessionUser = data.user ?? data.session?.user ?? null
+      if (!sessionUser) {
+        return { error: 'Sign in failed. Please try again.', user: null, loginEmail }
       }
+
+      const { profile: hydratedProfile, verified } = await hydrateSession(sessionUser, {
+        fast: true,
+      })
+
+      if (!verified) {
+        void supabase.auth.signOut()
+        setUser(null)
+        setProfile(null)
+        setAdminVerified(null)
+        return {
+          error: mapAuthError('Email not confirmed'),
+          user: null,
+          loginEmail,
+        }
+      }
+
+      const activeProfile = hydratedProfile ?? minimalProfileFromUser(sessionUser)
+      setUser(sessionUser)
+      setProfile(activeProfile)
+
+      if (activeProfile.role === 'admin') {
+        setAdminVerified(true)
+      } else {
+        setAdminVerified(false)
+        void withTimeoutOr(checkIsAdminUid(sessionUser.id), 5000, { isAdmin: false }).then(
+          (check) => {
+            if (!check.isAdmin) return
+            setAdminVerified(true)
+          }
+        )
+      }
+
+      void fetchProfile(sessionUser.id).then((full) => {
+        if (full) setProfile(full)
+      })
+
+      return { error: null, user: sessionUser, loginEmail }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed'
+      return { error: mapAuthError(message), user: null, loginEmail }
+    } finally {
+      authInFlightRef.current = false
     }
-
-    if (sessionUser) setUser(sessionUser)
-
-    return { error: null, user: sessionUser, loginEmail: email.trim().toLowerCase() }
   }
 
   const resendConfirmationEmail = async (email: string) => {
@@ -266,6 +409,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requestPasswordResetOtp = async (email: string) => {
     return issueEmailOtp(email, 'recovery')
+  }
+
+  const verifyRecoveryOtp = async (email: string, token: string) => {
+    if (!supabase) {
+      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const { error } = await supabase.rpc('verify_recovery_email_otp', {
+      p_email: email.trim().toLowerCase(),
+      p_code: normalizeOtpInput(token),
+    })
+
+    return { error: error ? mapAuthError(error.message) : null }
+  }
+
+  const resetPasswordAfterRecovery = async (email: string, newPassword: string) => {
+    if (!supabase) {
+      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const { error } = await supabase.rpc('reset_password_after_recovery', {
+      p_email: email.trim().toLowerCase(),
+      p_new_password: newPassword,
+    })
+
+    return { error: error ? mapAuthError(error.message) : null }
   }
 
   const resetPasswordWithOtp = async (email: string, token: string, newPassword: string) => {
@@ -316,6 +485,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { username: normalized, phone: '' },
       },
     })
+
+    // Confirm email OFF auto-creates a session — clear it until OTP is verified
+    if (signUpData?.session || signUpData?.user) {
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      setAdminVerified(null)
+    }
 
     const userCreated = Boolean(signUpData?.user?.id)
 
@@ -382,12 +559,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'Auth is not configured. See AUTH_SETUP.md', user: null }
     }
 
-    const email = await resolveLoginEmail(identifier)
-    if (!email) {
-      return { error: 'Invalid username or email', user: null, loginEmail: null }
+    try {
+      return await withTimeout(
+        (async () => {
+          const email = await resolveLoginEmail(identifier)
+          if (!email) {
+            return { error: 'Invalid username or email', user: null, loginEmail: null }
+          }
+          return signInWithEmail(email, password)
+        })(),
+        20000,
+        'Login timed out. Check your connection and try again.'
+      )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed'
+      return { error: mapAuthError(message), user: null, loginEmail: null }
     }
-
-    return signInWithEmail(email, password)
   }
 
   const signOut = async () => {
@@ -396,6 +583,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setProfile(null)
     setAdminVerified(null)
+  }
+
+  const deleteAccount = async (username: string) => {
+    if (!supabase) {
+      return { error: 'Auth is not configured. See AUTH_SETUP.md' }
+    }
+
+    const { error } = await supabase.rpc('delete_my_account', {
+      p_username: normalizeUsername(username),
+    })
+
+    if (error) {
+      return { error: mapAuthError(error.message) }
+    }
+
+    await signOut()
+    return { error: null }
   }
 
   const isAdmin = profile?.role === 'admin' || adminVerified === true
@@ -416,8 +620,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithEmail,
         resendConfirmationEmail,
         requestPasswordResetOtp,
+        verifyRecoveryOtp,
+        resetPasswordAfterRecovery,
         resetPasswordWithOtp,
         signOut,
+        deleteAccount,
         refreshProfile,
         verifyAdmin,
       }}

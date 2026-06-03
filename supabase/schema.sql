@@ -13,6 +13,10 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "Users read own profile" on public.profiles;
+drop policy if exists "Users update own profile" on public.profiles;
+drop policy if exists "Admins read all profiles" on public.profiles;
+
 create policy "Users read own profile"
   on public.profiles for select
   using (auth.uid() = id);
@@ -65,6 +69,11 @@ create table if not exists public.orders (
 );
 
 alter table public.orders enable row level security;
+
+drop policy if exists "Users insert own orders" on public.orders;
+drop policy if exists "Users read own orders" on public.orders;
+drop policy if exists "Admins read all orders" on public.orders;
+drop policy if exists "Admins update orders" on public.orders;
 
 create policy "Users insert own orders"
   on public.orders for insert

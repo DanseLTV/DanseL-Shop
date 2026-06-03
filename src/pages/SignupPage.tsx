@@ -7,6 +7,7 @@ import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { AuthStepCardHeader } from '../components/auth/AuthStepCardHeader'
 import { isValidUsername, normalizeUsername } from '../utils/authHelpers'
 import { OTP_LENGTH, isCompleteOtp, normalizeOtpInput } from '../constants/authOtp'
 
@@ -27,7 +28,7 @@ export function SignupPage() {
   const [otpCode, setOtpCode] = useState('')
   const [signupEmail, setSignupEmail] = useState('')
   const [resendingOtp, setResendingOtp] = useState(false)
-  const { signUp, verifySignupOtp, resendSignupOtp, isConfigured } = useAuth()
+  const { signUp, verifySignupOtp, resendSignupOtp, signOut, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
@@ -111,6 +112,25 @@ export function SignupPage() {
     }
   }
 
+  const handleBack = () => {
+    if (loading || resendingOtp) return
+    setError('')
+    if (step === 'otp') {
+      setOtpCode('')
+      setStep('signup')
+      return
+    }
+    void signOut()
+    navigate(`/login?redirect=${encodeURIComponent(redirect)}`)
+  }
+
+  const stepNumber = step === 'signup' ? 1 : 2
+  const stepHint =
+    step === 'signup'
+      ? 'Choose a username — use it to sign in later'
+      : `Enter the ${OTP_LENGTH}-digit code sent to your email`
+  const backLabel = step === 'signup' ? 'Back to sign in' : 'Back to sign up'
+
   const inputClass =
     'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none'
 
@@ -124,9 +144,7 @@ export function SignupPage() {
               Join DANSEL SHOP
             </span>
             <h1 className="font-display text-3xl font-bold text-white">Create Account</h1>
-            <p className="mt-2 text-sm text-white/50">
-              Choose a username — use it to sign in later
-            </p>
+            <p className="mt-2 text-sm text-white/50">{stepHint}</p>
           </div>
 
           {!isConfigured && <AuthConfigBanner />}
@@ -142,10 +160,19 @@ export function SignupPage() {
               <p className="mt-2 text-xs text-white/40">Redirecting to login…</p>
             </div>
           ) : step === 'otp' ? (
-            <motion.form
-              onSubmit={handleVerifyOtp}
-              className="glass-card space-y-4 p-6 sm:p-8"
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card overflow-hidden"
             >
+              <AuthStepCardHeader
+                backLabel={backLabel}
+                onBack={handleBack}
+                disabled={loading || resendingOtp}
+                stepLabel={`Step ${stepNumber} of 2`}
+              />
+
+              <form onSubmit={handleVerifyOtp} className="space-y-4 p-6 sm:p-8">
               <div className="rounded-lg border border-accent-violet/30 bg-accent-violet/10 px-4 py-3">
                 <p className="text-sm text-white/80">
                   We sent a {OTP_LENGTH}-digit code to <span className="font-semibold">{signupEmail}</span>.
@@ -195,12 +222,22 @@ export function SignupPage() {
               >
                 {resendingOtp ? 'Resending OTP…' : 'Resend OTP'}
               </button>
-            </motion.form>
+              </form>
+            </motion.div>
           ) : (
-            <motion.form
-              onSubmit={handleSubmit}
-              className="glass-card space-y-4 p-6 sm:p-8"
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card overflow-hidden"
             >
+              <AuthStepCardHeader
+                backLabel={backLabel}
+                onBack={handleBack}
+                disabled={loading}
+                stepLabel={`Step ${stepNumber} of 2`}
+              />
+
+              <form onSubmit={handleSubmit} className="space-y-4 p-6 sm:p-8">
               {error && (
                 <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
@@ -334,12 +371,16 @@ export function SignupPage() {
                 Already have an account?{' '}
                 <Link
                   to={`/login?redirect=${encodeURIComponent(redirect)}`}
+                  onClick={() => {
+                    void signOut()
+                  }}
                   className="font-medium text-accent-violet hover:text-accent-cyan"
                 >
                   Sign in
                 </Link>
               </p>
-            </motion.form>
+              </form>
+            </motion.div>
           )}
         </ScrollReveal>
       </div>

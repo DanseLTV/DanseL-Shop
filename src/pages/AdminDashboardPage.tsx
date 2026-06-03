@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Package, Users, Clock, LogOut, RefreshCw, MessageCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -36,14 +36,21 @@ export function AdminDashboardPage() {
   const [lastCustomerMessageAt, setLastCustomerMessageAt] = useState<
     Record<string, string>
   >({})
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
+  const [actionSuccess, setActionSuccess] = useState('')
 
-  const loadData = async () => {
+  const initialSelectDone = useRef(false)
+
+  const loadData = useCallback(async (options?: { silent?: boolean }) => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    setLoading(true)
-    setLoadError('')
+    if (!options?.silent) {
+      setLoading(true)
+      setLoadError('')
+    }
 
     try {
       const [ordersRes, profilesRes] = await Promise.all([
@@ -82,43 +89,128 @@ export function AdminDashboardPage() {
         setLastCustomerMessageAt(map)
       }
 
-      if (!selectedOrderId && list[0]) {
+      if (!initialSelectDone.current && list[0]) {
         setSelectedOrderId(list[0].id)
+        initialSelectDone.current = true
       }
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Failed to load orders.')
     } finally {
-      setLoading(false)
+      if (!options?.silent) setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadData()
   }, [])
 
-  const updateOrderStatus = async (orderId: string, status: OrderRecord['status']) => {
-    if (!supabase) return
-    await supabase.from('orders').update({ status }).eq('id', orderId)
+  useEffect(() => {
+    initialSelectDone.current = false
+    void loadData()
+  }, [loadData])
 
-    const selected = orders.find((o) => o.id === orderId)
-    if (selected && user) {
-      const statusMessages: Partial<Record<OrderRecord['status'], string>> = {
-        paid: `Payment verified for order #${orderId.slice(0, 8)}. We're preparing your ${selected.product_name}.`,
-        delivered: `Your order has been delivered! Check this chat for your account details. Enjoy!`,
-        cancelled: `This order was cancelled. Reply here if you need help.`,
-      }
-      const body = statusMessages[status]
-      if (body) {
-        await supabase.from('order_messages').insert({
-          order_id: orderId,
-          sender_id: user.id,
-          sender_role: 'admin',
-          body,
-        })
-      }
+  // Live updates without wiping the inbox UI.
+  useEffect(() => {
+    const client = supabase
+    if (!client) return
+
+    const channel = client
+      .channel('admin-orders-live')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          const row = payload.new as OrderWithCustomer
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === row.id
+                ? { ...o, ...row, profiles: o.profiles ?? row.profiles }
+                : o
+            )
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        () => {
+          void loadData({ silent: true })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'order_messages' },
+        (payload) => {
+          const row = payload.new as { order_id: string; created_at: string; sender_role: string }
+          if (row.sender_role !== 'customer') return
+          setLastCustomerMessageAt((prev) => ({ ...prev, [row.order_id]: row.created_at }))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
     }
+  }, [loadData])
 
-    loadData()
+  const updateOrderStatus = async (orderId: string, status: OrderRecord['status']) => {
+    if (!supabase) {
+      setActionError('Database is not configured.')
+      return
+    }
+    if (updatingId) return
+
+    setActionError('')
+    setActionSuccess('')
+    setUpdatingId(orderId)
+
+    const prevOrder = orders.find((o) => o.id === orderId)
+
+    try {
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId)
+
+      if (updateError) {
+        const hint = updateError.message.toLowerCase().includes('row-level security')
+          ? ' Make sure your account has the admin role (profiles.role = admin).'
+          : ''
+        setActionError(`Could not update status: ${updateError.message}.${hint}`)
+        return
+      }
+
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+      )
+
+      if (prevOrder && user) {
+        const statusMessages: Partial<Record<OrderRecord['status'], string>> = {
+          paid: `Payment verified for order #${orderId.slice(0, 8)}. We're preparing your ${prevOrder.product_name}.`,
+          delivered: `Your order has been delivered! Check this chat for your account details. Enjoy!`,
+          cancelled: `This order was cancelled. Reply here if you need help.`,
+        }
+        const body = statusMessages[status]
+        if (body) {
+          const { error: msgError } = await supabase.from('order_messages').insert({
+            order_id: orderId,
+            sender_id: user.id,
+            sender_role: 'admin',
+            body,
+          })
+          if (msgError) {
+            setActionSuccess(
+              `Status updated to "${status}", but the auto-message to the customer failed: ${msgError.message}`
+            )
+            return
+          }
+        }
+      }
+
+      setActionSuccess(`Order #${orderId.slice(0, 8)} marked as "${status}".`)
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'Could not update the order. Please try again.'
+      )
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length
@@ -136,6 +228,7 @@ export function AdminDashboardPage() {
     { key: 'pending', label: 'Pending' },
     { key: 'paid', label: 'Paid' },
     { key: 'delivered', label: 'Delivered' },
+    { key: 'cancelled', label: 'Cancelled' },
   ]
 
   return (
@@ -153,7 +246,7 @@ export function AdminDashboardPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={loadData}
+                onClick={() => void loadData()}
                 className="btn-outline inline-flex items-center gap-2 px-4 py-2 text-sm"
               >
                 <RefreshCw className="h-4 w-4" />
@@ -230,7 +323,11 @@ export function AdminDashboardPage() {
                       <button
                         key={order.id}
                         type="button"
-                        onClick={() => setSelectedOrderId(order.id)}
+                        onClick={() => {
+                          setSelectedOrderId(order.id)
+                          setActionError('')
+                          setActionSuccess('')
+                        }}
                         className={`w-full rounded-xl border p-4 text-left transition-all ${
                           active
                             ? 'border-accent-violet/50 bg-accent-violet/10'
@@ -290,37 +387,63 @@ export function AdminDashboardPage() {
 
                     <OrderProgress status={selected.status} compact />
 
-                    <div className="flex flex-wrap gap-2 border-t border-white/10 pt-4">
-                      {selected.status === 'pending' && (
-                        <>
+                    <div className="border-t border-white/10 pt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {selected.status === 'pending' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={updatingId === selected.id}
+                              onClick={() => updateOrderStatus(selected.id, 'paid')}
+                              className="rounded-lg bg-emerald-600/80 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {updatingId === selected.id ? 'Updating…' : '✓ Verify payment'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={updatingId === selected.id}
+                              onClick={() => updateOrderStatus(selected.id, 'cancelled')}
+                              className="rounded-lg border border-red-500/40 px-4 py-2 text-xs font-medium text-red-300 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Cancel order
+                            </button>
+                          </>
+                        )}
+                        {selected.status === 'paid' && (
                           <button
                             type="button"
-                            onClick={() => updateOrderStatus(selected.id, 'paid')}
-                            className="rounded-lg bg-emerald-600/80 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-600"
+                            disabled={updatingId === selected.id}
+                            onClick={() => updateOrderStatus(selected.id, 'delivered')}
+                            className="rounded-lg bg-accent-violet/80 px-4 py-2 text-xs font-semibold text-white hover:bg-accent-violet disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            ✓ Verify payment
+                            {updatingId === selected.id ? 'Updating…' : 'Mark delivered'}
                           </button>
+                        )}
+                        {selected.status === 'cancelled' && (
                           <button
                             type="button"
-                            onClick={() => updateOrderStatus(selected.id, 'cancelled')}
-                            className="rounded-lg border border-red-500/40 px-4 py-2 text-xs font-medium text-red-300 hover:bg-red-500/10"
+                            disabled={updatingId === selected.id}
+                            onClick={() => updateOrderStatus(selected.id, 'pending')}
+                            className="rounded-lg border border-white/20 px-4 py-2 text-xs font-medium text-white/70 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Cancel order
+                            Reopen as pending
                           </button>
-                        </>
+                        )}
+                        {selected.status === 'delivered' && (
+                          <p className="text-xs text-emerald-400/90">
+                            Order complete — customer was notified in chat.
+                          </p>
+                        )}
+                      </div>
+
+                      {actionError && (
+                        <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                          {actionError}
+                        </p>
                       )}
-                      {selected.status === 'paid' && (
-                        <button
-                          type="button"
-                          onClick={() => updateOrderStatus(selected.id, 'delivered')}
-                          className="rounded-lg bg-accent-violet/80 px-4 py-2 text-xs font-semibold text-white hover:bg-accent-violet"
-                        >
-                          Mark delivered
-                        </button>
-                      )}
-                      {selected.status === 'delivered' && (
-                        <p className="text-xs text-emerald-400/90">
-                          Order complete — customer was notified in chat.
+                      {actionSuccess && (
+                        <p className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+                          {actionSuccess}
                         </p>
                       )}
                     </div>
@@ -332,11 +455,11 @@ export function AdminDashboardPage() {
                 </GlassCard>
 
                 <OrderChat
+                  key={selected.id}
                   orderId={selected.id}
                   viewerRole="admin"
                   title="Message Customer"
                   className="min-h-[420px]"
-                  onMessageSent={loadData}
                 />
               </div>
             )}

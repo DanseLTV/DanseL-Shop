@@ -53,7 +53,8 @@ begin
       'to', jsonb_build_array(p_email),
       'subject', v_subject,
       'html', v_body
-    )
+    ),
+    timeout_milliseconds := 2000
   );
 exception
   when others then

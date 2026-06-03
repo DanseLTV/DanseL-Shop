@@ -6,6 +6,7 @@ import { Footer } from './components/layout/Footer'
 import { FloatingMessageButton } from './components/layout/FloatingMessageButton'
 import { MobileBottomNav } from './components/layout/MobileBottomNav'
 import { ScrollToTop } from './components/layout/ScrollToTop'
+import { AnimatedPageLayout } from './components/layout/AnimatedPageLayout'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminRoute } from './components/auth/AdminRoute'
 import { HomePage } from './pages/HomePage'
@@ -28,56 +29,58 @@ function App() {
           <ScrollToTop />
           <div className="flex min-h-screen flex-col">
             <Navbar />
-            <main className="flex-1">
+            <main className="flex-1 overflow-x-hidden">
               <Routes>
-              <Route path="/" element={<ShopPage />} />
-              <Route path="/shop" element={<ShopPage />} />
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/policies" element={<PoliciesPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route
-                path="/order"
-                element={
-                  <ProtectedRoute>
-                    <OrderPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/account"
-                element={
-                  <ProtectedRoute>
-                    <AccountPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/orders"
-                element={
-                  <ProtectedRoute>
-                    <MyOrdersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/orders/:orderId"
-                element={
-                  <ProtectedRoute>
-                    <MyOrdersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboardPage />
-                  </AdminRoute>
-                }
-              />
+                <Route element={<AnimatedPageLayout />}>
+                  <Route path="/" element={<ShopPage />} />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/home" element={<HomePage />} />
+                  <Route path="/policies" element={<PoliciesPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route
+                    path="/order"
+                    element={
+                      <ProtectedRoute>
+                        <OrderPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/account"
+                    element={
+                      <ProtectedRoute>
+                        <AccountPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders"
+                    element={
+                      <ProtectedRoute>
+                        <MyOrdersPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders/:orderId"
+                    element={
+                      <ProtectedRoute>
+                        <MyOrdersPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <AdminDashboardPage />
+                      </AdminRoute>
+                    }
+                  />
+                </Route>
               </Routes>
             </main>
             <Footer />

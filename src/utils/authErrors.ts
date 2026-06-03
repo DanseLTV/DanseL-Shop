@@ -29,12 +29,38 @@ export function mapAuthError(message: string): string {
   if (lower.includes('no account found for this email')) {
     return 'Account was not created. Please try Sign Up again. If this keeps happening, turn off Confirm email in Supabase Auth settings.'
   }
+  if (lower.includes('database error querying schema')) {
+    return 'Login failed due to a database auth token issue. Run supabase/schema-login-fix.sql in Supabase SQL Editor, then try again.'
+  }
+  if (lower.includes('database error loading user')) {
+    return 'Signup failed while creating your account. Run supabase/schema-signup-fix.sql in Supabase SQL Editor, then try again.'
+  }
+  if (lower.includes('username does not match')) {
+    return 'Username does not match. Type your exact username to confirm deletion.'
+  }
+  if (lower.includes('admin accounts cannot be deleted')) {
+    return 'Admin accounts cannot be deleted here.'
+  }
+  if (lower.includes('please verify the recovery code first')) {
+    return 'Please verify the recovery code before setting a new password.'
+  }
+  if (lower.includes('recovery session expired')) {
+    return 'Recovery session expired. Request a new code and verify again.'
+  }
+  if (lower.includes('not authenticated')) {
+    return 'Please sign in again to delete your account.'
+  }
 
   return message
 }
 
 export function isEmailNotConfirmedError(message: string): boolean {
-  return message.toLowerCase().includes('email not confirmed')
+  const lower = message.toLowerCase()
+  return (
+    lower.includes('email not confirmed') ||
+    lower.includes('email is not verified') ||
+    lower.includes('not verified yet')
+  )
 }
 
 /** Supabase may create the user but fail its own SMTP mail — we send OTP via Resend instead. */

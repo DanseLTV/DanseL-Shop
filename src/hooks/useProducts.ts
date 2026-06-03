@@ -37,12 +37,12 @@ export function useProducts() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadOverrides = useCallback(async () => {
+  const loadOverrides = useCallback(async (options?: { silent?: boolean }) => {
     if (!supabase) {
       setLoading(false)
       return
     }
-    setLoading(true)
+    if (!options?.silent) setLoading(true)
     const { data, error: fetchError } = await supabase
       .from('product_overrides')
       .select('product_id, name, description, price, duration, availability, image')
@@ -54,11 +54,32 @@ export function useProducts() {
       setError('')
       setOverrides((data as ProductOverrideRow[]) ?? [])
     }
-    setLoading(false)
+    if (!options?.silent) setLoading(false)
   }, [])
 
   useEffect(() => {
     loadOverrides()
+  }, [loadOverrides])
+
+  // Live updates: when admin saves a product, every open shop refreshes automatically.
+  useEffect(() => {
+    const client = supabase
+    if (!client) return
+
+    const channel = client
+      .channel('product-overrides-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'product_overrides' },
+        () => {
+          void loadOverrides({ silent: true })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
   }, [loadOverrides])
 
   const products = useMemo(() => mergeProducts(baseProducts, overrides), [overrides])

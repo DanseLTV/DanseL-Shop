@@ -18,6 +18,7 @@ export interface UserProfile {
   phone: string
   role: UserRole
   created_at?: string
+  email_verified_at?: string | null
   /** @deprecated legacy column — use username */
   full_name?: string
 }

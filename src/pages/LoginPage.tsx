@@ -8,6 +8,7 @@ import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
 import { isEmailNotConfirmedError } from '../utils/authErrors'
+import { isAccountVerified } from '../utils/authHelpers'
 
 export function LoginPage() {
   const [identifier, setIdentifier] = useState('')
@@ -17,7 +18,7 @@ export function LoginPage() {
   const [loginEmail, setLoginEmail] = useState<string | null>(null)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [loading, setLoading] = useState(false)
-  const { signIn, resendConfirmationEmail, isConfigured, user, loading: authLoading } =
+  const { signIn, resendConfirmationEmail, isConfigured, user, profile, loading: authLoading } =
     useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -26,10 +27,22 @@ export function LoginPage() {
   const needsEmailConfirmation = Boolean(error && isEmailNotConfirmedError(error))
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!loading) return
+    const watchdog = setTimeout(() => {
+      setLoading(false)
+      setError((prev) =>
+        prev || 'Login is taking too long. Refresh the page (Ctrl+Shift+R) and try again.'
+      )
+    }, 12000)
+    return () => clearTimeout(watchdog)
+  }, [loading])
+
+  useEffect(() => {
+    if (authLoading) return
+    if (user && isAccountVerified(profile, user)) {
       navigate(decodeURIComponent(redirect), { replace: true })
     }
-  }, [authLoading, user, redirect, navigate])
+  }, [authLoading, user, profile, redirect, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,17 +51,22 @@ export function LoginPage() {
     setLoginEmail(null)
     setLoading(true)
 
-    const { error: err, loginEmail: resolvedEmail } = await signIn(identifier, password)
-    setLoading(false)
+    try {
+      const { error: err, loginEmail: resolvedEmail } = await signIn(identifier, password)
 
-    if (resolvedEmail) setLoginEmail(resolvedEmail)
+      if (resolvedEmail) setLoginEmail(resolvedEmail)
 
-    if (err) {
-      setError(err)
-      return
+      if (err) {
+        setError(err)
+        return
+      }
+
+      navigate(decodeURIComponent(redirect), { replace: true })
+    } catch {
+      setError('Sign in failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    navigate(decodeURIComponent(redirect), { replace: true })
   }
 
   const handleResend = async () => {

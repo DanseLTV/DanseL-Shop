@@ -53,3 +53,30 @@ export const floatAnimation = {
     ease: 'easeInOut' as const,
   },
 }
+
+/** Quick slide between routes — no fade (stays fully visible) */
+export const pageTransition: Variants = {
+  initial: {
+    y: 10,
+  },
+  animate: {
+    y: 0,
+    transition: {
+      duration: 0.2,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+  exit: {
+    y: -6,
+    transition: {
+      duration: 0.15,
+      ease: [0.4, 0, 1, 1],
+    },
+  },
+}
+
+export const pageTransitionReduced: Variants = {
+  initial: {},
+  animate: {},
+  exit: {},
+}

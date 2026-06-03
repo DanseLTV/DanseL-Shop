@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, MessageCircle, Plus } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Package, MessageCircle, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, type OrderRecord } from '../lib/supabase'
 import { formatPrice } from '../data/products'
@@ -10,6 +10,7 @@ import { SectionHeading } from '../components/ui/SectionHeading'
 import { GlassCard } from '../components/ui/GlassCard'
 import { OrderChat } from '../components/messages/OrderChat'
 import { GradientButton } from '../components/ui/GradientButton'
+import { BackNavLink } from '../components/ui/BackNavLink'
 import { OrderStatusBadge } from '../components/order/OrderStatusBadge'
 import { OrderProgress } from '../components/order/OrderProgress'
 import { PaymentProofViewer } from '../components/order/PaymentProofViewer'
@@ -33,60 +34,118 @@ export function MyOrdersPage() {
   const [loadError, setLoadError] = useState('')
   const selectedId = paramOrderId ?? orders[0]?.id ?? null
 
-  const loadOrders = async () => {
-    if (!supabase || !user) {
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setLoadError('')
+  const initialNavDone = useRef(false)
 
-    try {
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (ordersError) {
-        setLoadError(ordersError.message)
-        setOrders([])
+  const loadOrders = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!supabase || !user) {
+        setLoading(false)
         return
       }
+      if (!options?.silent) {
+        setLoading(true)
+        setLoadError('')
+      }
 
-      const list = (ordersData as OrderRecord[]) ?? []
-      setOrders(list)
-
-      if (list.length > 0) {
-        const ids = list.map((o) => o.id)
-        const { data: msgs } = await supabase
-          .from('order_messages')
-          .select('order_id, created_at, sender_role')
-          .in('order_id', ids)
-          .eq('sender_role', 'admin')
+      try {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
 
-        const map: Record<string, string> = {}
-        for (const m of msgs ?? []) {
-          if (!map[m.order_id]) map[m.order_id] = m.created_at
+        if (ordersError) {
+          setLoadError(ordersError.message)
+          setOrders([])
+          return
         }
-        setLastAdminMessageAt(map)
+
+        const list = (ordersData as OrderRecord[]) ?? []
+        setOrders(list)
+
+        if (list.length > 0) {
+          const ids = list.map((o) => o.id)
+          const { data: msgs } = await supabase
+            .from('order_messages')
+            .select('order_id, created_at, sender_role')
+            .in('order_id', ids)
+            .eq('sender_role', 'admin')
+            .order('created_at', { ascending: false })
+
+          const map: Record<string, string> = {}
+          for (const m of msgs ?? []) {
+            if (!map[m.order_id]) map[m.order_id] = m.created_at
+          }
+          setLastAdminMessageAt(map)
+        }
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : 'Failed to load orders.')
+      } finally {
+        if (!options?.silent) setLoading(false)
       }
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load orders.')
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    [user]
+  )
 
   useEffect(() => {
-    loadOrders()
-  }, [user])
+    initialNavDone.current = false
+    void loadOrders()
+  }, [loadOrders])
+
+  // Live updates without hiding the chat (no full-page loading spinner).
+  useEffect(() => {
+    const client = supabase
+    if (!client || !user) return
+
+    const channel = client
+      .channel(`my-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const row = payload.new as OrderRecord
+          setOrders((prev) =>
+            prev.map((o) => (o.id === row.id ? { ...o, ...row } : o))
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void loadOrders({ silent: true })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'order_messages' },
+        (payload) => {
+          const row = payload.new as { order_id: string; created_at: string; sender_role: string }
+          if (row.sender_role !== 'admin') return
+          setLastAdminMessageAt((prev) => ({ ...prev, [row.order_id]: row.created_at }))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [user, loadOrders])
 
   useEffect(() => {
-    if (!paramOrderId && orders[0]) {
-      navigate(`/orders/${orders[0].id}`, { replace: true })
-    }
+    if (paramOrderId || !orders[0] || initialNavDone.current) return
+    initialNavDone.current = true
+    navigate(`/orders/${orders[0].id}`, { replace: true })
   }, [orders, paramOrderId, navigate])
 
   const selectOrder = (id: string) => {
@@ -100,13 +159,7 @@ export function MyOrdersPage() {
       <AnimatedBackground />
       <div className="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Link
-            to="/account"
-            className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-accent-violet"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to account
-          </Link>
+          <BackNavLink to="/account" label="Back to account" />
           <GradientButton onClick={() => goToOrder()} size="sm">
             <Plus className="h-4 w-4" />
             New order
@@ -210,11 +263,11 @@ export function MyOrdersPage() {
                 </GlassCard>
 
                 <OrderChat
+                  key={selected.id}
                   orderId={selected.id}
                   viewerRole="customer"
                   title="Chat with Admin"
                   className="min-h-[360px]"
-                  onMessageSent={loadOrders}
                 />
 
                 <p className="flex items-center gap-2 text-xs text-white/40">

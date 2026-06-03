@@ -85,7 +85,8 @@ begin
       'to', jsonb_build_array(p_email),
       'subject', v_subject,
       'html', v_body
-    )
+    ),
+    timeout_milliseconds := 2000
   );
 exception
   when others then
@@ -130,8 +131,8 @@ begin
   end if;
 
   if v_purpose = 'signup' and exists (
-    select 1 from auth.users
-    where id = v_user_id and email_confirmed_at is not null
+    select 1 from public.profiles
+    where id = v_user_id and email_verified_at is not null
   ) then
     raise exception 'Email is already verified';
   end if;
@@ -208,8 +209,12 @@ begin
   update auth.users
   set
     email_confirmed_at = coalesce(email_confirmed_at, now()),
-    confirmation_token = null,
+    confirmation_token = '',
     confirmation_sent_at = null
+  where id = v_user_id;
+
+  update public.profiles
+  set email_verified_at = now()
   where id = v_user_id;
 
   delete from public.email_otp_verifications where id = v_row.id;
