@@ -38,8 +38,8 @@ export function WhyChooseUs() {
             return (
               <ScrollReveal key={item.title} delay={i * 0.08}>
                 <GlassCard hover className="h-full p-6">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent-violet/20 to-accent-cyan/20">
-                    <Icon className="h-6 w-6 text-accent-violet" />
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand/20 to-brand-bright/20">
+                    <Icon className="h-6 w-6 text-brand" />
                   </div>
                   <h3 className="font-display text-lg font-semibold text-white">
                     {item.title}

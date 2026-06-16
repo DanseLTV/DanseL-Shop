@@ -25,7 +25,7 @@ export function FAQPreview() {
           <div className="mt-8 text-center">
             <Link
               to="/policies"
-              className="inline-flex items-center gap-2 text-sm font-medium text-accent-violet transition-colors hover:text-accent-cyan"
+              className="inline-flex items-center gap-2 text-sm font-medium text-brand transition-colors hover:text-brand-bright"
             >
               View all policies & full FAQ
               <ArrowRight className="h-4 w-4" />

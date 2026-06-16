@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Product } from '../../types'
 import { isLocalProductImage } from '../../data/productImages'
 
@@ -7,6 +7,8 @@ interface ProductImageProps {
   className?: string
   overlay?: React.ReactNode
   size?: 'card' | 'modal' | 'hero'
+  /** Load immediately (admin preview, modals) */
+  priority?: boolean
 }
 
 export function ProductImage({
@@ -14,14 +16,22 @@ export function ProductImage({
   className = '',
   overlay,
   size = 'card',
+  priority = false,
 }: ProductImageProps) {
-  const primarySrc = product.image ?? `/products/${product.id}.svg`
-  const [src, setSrc] = useState(primarySrc)
-  const [loaded, setLoaded] = useState(isLocalProductImage(primarySrc))
-  const isLocal = isLocalProductImage(src)
-  const isCover = product.imageFit === 'cover' || isLocal
-
   const fallbackSvg = `/products/${product.id}.svg`
+  const resolveSrc = (image?: string) =>
+    image?.trim() ? image.trim() : fallbackSvg
+
+  const [src, setSrc] = useState(() => resolveSrc(product.image))
+  const [loaded, setLoaded] = useState(true)
+  const isLocal = isLocalProductImage(src)
+  const isCover = product.imageFit === 'cover' || !isLocal
+
+  useEffect(() => {
+    const next = resolveSrc(product.image)
+    setSrc(next)
+    setLoaded(true)
+  }, [product.image, product.id])
 
   const handleError = () => {
     if (src !== fallbackSvg) {
@@ -56,18 +66,10 @@ export function ProductImage({
         } ${loaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setLoaded(true)}
         onError={handleError}
-        loading={size === 'card' ? 'lazy' : 'eager'}
+        loading={priority || size !== 'card' ? 'eager' : 'lazy'}
         decoding="async"
       />
 
-      {/* Bottom fade for text readability on cards */}
-      <div
-        className={`pointer-events-none absolute inset-0 ${
-          isCover
-            ? 'bg-gradient-to-t from-midnight-950/90 via-midnight-950/20 to-transparent'
-            : 'bg-gradient-to-t from-midnight-950/70 via-transparent to-transparent'
-        }`}
-      />
       {overlay}
     </div>
   )

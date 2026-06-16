@@ -7,15 +7,15 @@ export function OrderGuide() {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="mb-8 rounded-2xl border border-accent-violet/20 bg-gradient-to-br from-accent-violet/10 to-transparent">
+    <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.04]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-white">
-          <ListOrdered className="h-4 w-4 text-accent-cyan" />
+        <span className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight text-white">
+          <ListOrdered className="h-4 w-4 text-brand-bright" />
           How to order — quick guide
         </span>
         <ChevronDown
@@ -38,11 +38,11 @@ export function OrderGuide() {
                   key={step.step}
                   className="rounded-xl border border-white/10 bg-white/5 p-4"
                 >
-                  <span className="font-display text-lg font-bold gradient-text">
+                  <span className="font-display text-xl font-bold gradient-text">
                     {step.step}
                   </span>
-                  <p className="mt-2 text-sm font-semibold text-white">{step.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-white/50">
+                  <p className="mt-2 text-sm font-semibold tracking-tight text-white">{step.title}</p>
+                  <p className="text-caption mt-1.5 leading-relaxed">
                     {step.description}
                   </p>
                 </div>

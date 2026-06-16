@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Store, Info, MessageCircle, User, LogIn, UserPlus } from 'lucide-react'
+import { Store, Info, MessageCircle, User, LogIn, UserPlus, ShoppingCart } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useCart } from '../../context/CartContext'
 
 export function MobileBottomNav() {
   const location = useLocation()
   const { user, loading } = useAuth()
+  const { itemCount } = useCart()
   const path = location.pathname
 
   const hide =
@@ -15,9 +17,19 @@ export function MobileBottomNav() {
 
   if (hide || loading) return null
 
+  const cartItem = {
+    to: '/cart',
+    label: 'Cart',
+    icon: ShoppingCart,
+    match: (p: string) => p === '/cart',
+    badge: itemCount,
+  }
+
   const items = user
     ? [
-        { to: '/', label: 'Shop', icon: Store, match: (p: string) => p === '/' || p === '/shop' },
+        { to: '/shop', label: 'Home', icon: Store, match: (p: string) => p === '/shop' },
+        cartItem,
+        { to: '/home', label: 'About', icon: Info, match: (p: string) => p === '/home' },
         {
           to: '/orders',
           label: 'Orders',
@@ -25,10 +37,10 @@ export function MobileBottomNav() {
           match: (p: string) => p.startsWith('/orders'),
         },
         { to: '/account', label: 'Account', icon: User, match: (p: string) => p === '/account' },
-        { to: '/home', label: 'About', icon: Info, match: (p: string) => p === '/home' },
       ]
     : [
-        { to: '/', label: 'Shop', icon: Store, match: (p: string) => p === '/' || p === '/shop' },
+        { to: '/shop', label: 'Home', icon: Store, match: (p: string) => p === '/shop' },
+        cartItem,
         { to: '/home', label: 'About', icon: Info, match: (p: string) => p === '/home' },
         { to: '/login', label: 'Sign In', icon: LogIn, match: (p: string) => p === '/login' },
         { to: '/signup', label: 'Sign Up', icon: UserPlus, match: (p: string) => p === '/signup' },
@@ -43,20 +55,28 @@ export function MobileBottomNav() {
         {items.map((item) => {
           const active = item.match(path)
           const Icon = item.icon
+          const badge = 'badge' in item ? item.badge : 0
           return (
             <Link
               key={item.to + item.label}
               to={item.to}
-              className={`flex flex-1 flex-col items-center gap-0.5 px-2 py-2.5 text-[10px] font-medium transition-colors ${
-                active ? 'text-accent-violet' : 'text-white/50 hover:text-white/80'
+              className={`relative flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-medium transition-colors ${
+                active ? 'text-neon-cyan' : 'text-white/50 hover:text-white/80'
               }`}
             >
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                  active ? 'bg-accent-violet/20' : ''
+                className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+                  active
+                    ? 'bg-neon-cyan/15 shadow-neon-cyan ring-1 ring-neon-cyan/40'
+                    : 'hover:bg-neon-cyan/5'
                 }`}
               >
                 <Icon className="h-5 w-5" />
+                {badge > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-neon-cyan to-neon-magenta px-1 text-[9px] font-bold text-midnight-950 shadow-neon-cyan">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
               </span>
               {item.label}
             </Link>

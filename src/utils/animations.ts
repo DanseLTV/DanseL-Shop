@@ -80,3 +80,13 @@ export const pageTransitionReduced: Variants = {
   animate: {},
   exit: {},
 }
+
+/** Keep one mounted page when only nested ids/query change (orders inbox, admin). */
+export function getRouteAnimationKey(pathname: string): string {
+  if (pathname === '/orders' || pathname.startsWith('/orders/')) return '/orders'
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) return '/admin'
+  if (pathname === '/shop') return '/shop'
+  if (pathname === '/home') return '/home'
+  if (pathname === '/') return '/'
+  return pathname
+}

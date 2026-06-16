@@ -13,17 +13,20 @@ export interface PendingOrder {
   productId?: string
   productName?: string
   productPrice?: number
+  cartCheckout?: boolean
 }
 
 interface OrderFlowContextValue {
   startOrder: (pending?: PendingOrder) => void
+  startCartCheckout: () => void
   closePrompt: () => void
 }
 
 const OrderFlowContext = createContext<OrderFlowContextValue | null>(null)
 
-function buildOrderPath(productId?: string) {
-  return productId ? `/order?product=${productId}` : '/order'
+function buildOrderPath(options?: PendingOrder) {
+  if (options?.cartCheckout) return '/order?cart=1'
+  return options?.productId ? `/order?product=${options.productId}` : '/order'
 }
 
 export function OrderFlowProvider({ children }: { children: ReactNode }) {
@@ -39,7 +42,7 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
 
   const startOrder = useCallback(
     (options?: PendingOrder) => {
-      const orderPath = buildOrderPath(options?.productId)
+      const orderPath = buildOrderPath(options)
 
       if (user) {
         navigate(orderPath)
@@ -52,22 +55,34 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
     [user, navigate]
   )
 
+  const startCartCheckout = useCallback(() => {
+    const orderPath = buildOrderPath({ cartCheckout: true })
+
+    if (user) {
+      navigate(orderPath)
+      return
+    }
+
+    setPending({ cartCheckout: true })
+    setShowPrompt(true)
+  }, [user, navigate])
+
   const goToLogin = useCallback(() => {
-    const orderPath = buildOrderPath(pending?.productId)
+    const orderPath = buildOrderPath(pending ?? undefined)
     setShowPrompt(false)
     navigate(`/login?redirect=${encodeURIComponent(orderPath)}`)
     setPending(null)
-  }, [navigate, pending?.productId])
+  }, [navigate, pending])
 
   const goToSignup = useCallback(() => {
-    const orderPath = buildOrderPath(pending?.productId)
+    const orderPath = buildOrderPath(pending ?? undefined)
     setShowPrompt(false)
     navigate(`/signup?redirect=${encodeURIComponent(orderPath)}`)
     setPending(null)
-  }, [navigate, pending?.productId])
+  }, [navigate, pending])
 
   return (
-    <OrderFlowContext.Provider value={{ startOrder, closePrompt }}>
+    <OrderFlowContext.Provider value={{ startOrder, startCartCheckout, closePrompt }}>
       {children}
       <OrderLoginPromptModal
         open={showPrompt}

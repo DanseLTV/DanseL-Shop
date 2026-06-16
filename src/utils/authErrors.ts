@@ -35,6 +35,12 @@ export function mapAuthError(message: string): string {
   if (lower.includes('database error loading user')) {
     return 'Signup failed while creating your account. Run supabase/schema-signup-fix.sql in Supabase SQL Editor, then try again.'
   }
+  if (lower.includes('database error saving new user')) {
+    return 'Could not create your account. That username may already be taken, or signup needs a database update. Run supabase/patch-signup-save-user.sql in Supabase SQL Editor, then try again.'
+  }
+  if (lower.includes('username is already taken')) {
+    return 'Username is already taken. Please choose another one.'
+  }
   if (lower.includes('username does not match')) {
     return 'Username does not match. Type your exact username to confirm deletion.'
   }

@@ -16,10 +16,10 @@ export function AccountNavRow({
   icon: Icon,
   title,
   subtitle,
-  iconClassName = 'text-accent-cyan',
+  iconClassName = 'text-brand',
 }: AccountNavRowProps) {
   const className =
-    'flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition-colors hover:border-accent-violet/30 hover:bg-white/[0.06]'
+    'flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition-colors hover:border-brand/30 hover:bg-white/[0.06]'
 
   const content = (
     <>

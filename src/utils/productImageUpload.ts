@@ -82,6 +82,50 @@ export async function getCroppedBlob(
   })
 }
 
+/** Scale a crop measured on a displayed <img> to the image's natural pixel size. */
+export function scaleCropToNatural(
+  crop: PixelCrop,
+  displayedWidth: number,
+  displayedHeight: number,
+  naturalWidth: number,
+  naturalHeight: number
+): PixelCrop {
+  const scaleX = naturalWidth / displayedWidth
+  const scaleY = naturalHeight / displayedHeight
+  return {
+    x: Math.round(crop.x * scaleX),
+    y: Math.round(crop.y * scaleY),
+    width: Math.round(crop.width * scaleX),
+    height: Math.round(crop.height * scaleY),
+  }
+}
+
+/** Min zoom so the image fills the crop frame (cuts off sides/top/bottom). */
+export function computeCoverZoom(
+  naturalWidth: number,
+  naturalHeight: number,
+  aspect: number = PRODUCT_CARD_ASPECT
+): number {
+  if (!naturalWidth || !naturalHeight) return 1
+  const imageAspect = naturalWidth / naturalHeight
+  const zoom = imageAspect >= aspect ? imageAspect / aspect : aspect / imageAspect
+  return Math.min(Math.max(zoom * 1.02, 1), 4)
+}
+
+export function formatProductUploadError(message: string): string {
+  const lower = message.toLowerCase()
+  if (lower.includes('row-level security')) {
+    return (
+      'Upload blocked by permissions. In Supabase SQL Editor run supabase/patch-admin-rls-storage-chat.sql, ' +
+      "then set your account: update public.profiles set role = 'admin' where email = 'your@email.com';"
+    )
+  }
+  if (lower.includes('bucket') && lower.includes('not found')) {
+    return 'Storage bucket missing. Run supabase/schema-product-images.sql in Supabase.'
+  }
+  return message
+}
+
 /** Uploads a cropped product image and returns its public URL. */
 export async function uploadProductImage(
   blob: Blob,
@@ -89,18 +133,50 @@ export async function uploadProductImage(
 ): Promise<{ url: string | null; error: string | null }> {
   if (!supabase) return { url: null, error: 'Storage is not configured.' }
 
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return { url: null, error: 'You must be signed in to upload images.' }
+  }
+
+  const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_uid', {
+    uid: user.id,
+  })
+
+  if (adminError) {
+    return {
+      url: null,
+      error: formatProductUploadError(
+        adminError.message.includes('does not exist')
+          ? 'Missing is_admin_uid. Run supabase/patch-admin-rls-storage-chat.sql'
+          : adminError.message
+      ),
+    }
+  }
+
+  if (!isAdmin) {
+    return {
+      url: null,
+      error:
+        "Your account is not admin in Supabase. Run: update public.profiles set role = 'admin' where id = auth.uid();",
+    }
+  }
+
   const path = `${productId}-${Date.now()}.jpg`
 
   const { error: uploadError } = await withTimeout(
     supabase.storage
       .from('product-images')
-      .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' }),
+      .upload(path, blob, { upsert: false, contentType: 'image/jpeg', cacheControl: '3600' }),
     20000,
     'Product image upload timed out.'
   )
 
   if (uploadError) {
-    return { url: null, error: uploadError.message }
+    return { url: null, error: formatProductUploadError(uploadError.message) }
   }
 
   const { data } = supabase.storage.from('product-images').getPublicUrl(path)

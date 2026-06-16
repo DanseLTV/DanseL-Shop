@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { isAdminEmail } from '../../constants/admin'
 
 interface AdminRouteProps {
   children: React.ReactNode
@@ -33,7 +34,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
       if (!cancelled && pendingRef.current) {
         finish(
           false,
-          'Admin access check timed out. Try signing in again at Admin Login, or confirm your account has role = admin in Supabase.'
+          'Admin access check timed out. Try signing in again, or confirm your account has role = admin in Supabase.'
         )
       }
     }, CHECK_TIMEOUT_MS + 2000)
@@ -46,7 +47,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
         return
       }
 
-      if (profile?.role === 'admin' || isAdmin) {
+      if (isAdminEmail(user.email) || profile?.role === 'admin' || isAdmin) {
         finish(true)
         return
       }
@@ -94,7 +95,8 @@ export function AdminRoute({ children }: AdminRouteProps) {
   }
 
   if (!user) {
-    return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />
+    const redirect = encodeURIComponent(location.pathname + location.search)
+    return <Navigate to={`/login?redirect=${redirect}`} replace />
   }
 
   if (!allowed) {
@@ -105,10 +107,10 @@ export function AdminRoute({ children }: AdminRouteProps) {
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
-            to="/admin/login"
-            className="rounded-xl bg-accent-violet px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-violet/90"
+            to={`/login?redirect=${encodeURIComponent('/admin')}`}
+            className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-midnight-950 hover:bg-brand-bright"
           >
-            Admin sign in
+            Sign in
           </Link>
           <Link
             to="/account"

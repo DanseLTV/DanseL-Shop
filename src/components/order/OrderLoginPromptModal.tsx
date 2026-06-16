@@ -71,7 +71,16 @@ export function OrderLoginPromptModal({
                 checkout.
               </p>
 
-              {pending?.productName && (
+              {pending?.cartCheckout ? (
+                <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-accent-violet">
+                    Cart checkout
+                  </p>
+                  <p className="mt-1 text-sm text-white/70">
+                    Sign in to pay for all items in your cart with one payment proof.
+                  </p>
+                </div>
+              ) : pending?.productName ? (
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-xs font-medium uppercase tracking-wider text-accent-violet">
                     Selected product
@@ -85,7 +94,7 @@ export function OrderLoginPromptModal({
                     </p>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="px-6 py-5">

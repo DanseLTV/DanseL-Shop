@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { getCategories } from '../../data/products'
+import { getCategoriesFromProducts } from '../../data/products'
+import { useProducts } from '../../hooks/useProducts'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GlassCard } from '../ui/GlassCard'
 
 export function Categories() {
-  const categories = getCategories()
+  const { products } = useProducts()
+  const categories = getCategoriesFromProducts(products)
 
   return (
     <section className="section-padding relative overflow-hidden">
@@ -26,14 +28,14 @@ export function Categories() {
               <Link to={`/shop?category=${encodeURIComponent(cat.name)}`}>
                 <GlassCard hover className="group h-full p-6 text-center">
                   <span className="text-4xl">{cat.icon}</span>
-                  <h3 className="mt-4 font-display text-lg font-semibold text-white group-hover:text-accent-violet transition-colors">
+                  <h3 className="mt-4 font-display text-lg font-semibold text-white group-hover:text-brand transition-colors">
                     {cat.name}
                   </h3>
                   <p className="mt-2 text-sm text-white/50">{cat.description}</p>
-                  <p className="mt-3 text-xs font-medium text-accent-violet">
+                  <p className="mt-3 text-xs font-medium text-brand">
                     {cat.count} products
                   </p>
-                  <ArrowRight className="mx-auto mt-4 h-4 w-4 text-white/30 transition-all group-hover:translate-x-1 group-hover:text-accent-violet" />
+                  <ArrowRight className="mx-auto mt-4 h-4 w-4 text-white/30 transition-all group-hover:translate-x-1 group-hover:text-brand" />
                 </GlassCard>
               </Link>
             </ScrollReveal>

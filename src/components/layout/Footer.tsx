@@ -1,148 +1,210 @@
 import { Link } from 'react-router-dom'
-import { Mail, MessageCircle, Send } from 'lucide-react'
+import { Mail, Send } from 'lucide-react'
 import { shopContact } from '../../data/shopContact'
+import { FireFooterEffect } from './FireFooterEffect'
 
 const footerLinks = {
   shop: [
-    { label: 'All Products', to: '/' },
-    { label: 'Streaming', to: '/?category=Streaming' },
-    { label: 'AI Tools', to: '/?category=AI Tools' },
-    { label: 'Writing Tools', to: '/?category=Writing Tools' },
+    { label: 'Products', to: '/shop' },
+    { label: 'Streaming', to: '/shop?category=Streaming' },
+    { label: 'AI Tools', to: '/shop?category=AI Tools' },
   ],
   support: [
     { label: 'FAQ', to: '/home#faq' },
-    { label: 'Reviews', to: '/home#reviews' },
     { label: 'How to Order', to: '/home#how-to-order' },
     { label: 'Contact', to: '/home#contact' },
   ],
   legal: [
     { label: 'Policies', to: '/policies' },
-    { label: 'Replacement Policy', to: '/policies#replacement' },
-    { label: 'Refund Policy', to: '/policies#refund' },
-    { label: 'Terms of Service', to: '/policies#terms' },
+    { label: 'Terms', to: '/policies#terms' },
   ],
 }
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-white/10 bg-midnight-900">
-      <div className="absolute inset-0 mesh-bg opacity-50" />
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <Link to="/" className="flex items-center gap-2">
-              <img
-                src="/shop-logo.png"
-                alt="Dansel Shop logo"
-                className="h-10 w-10 rounded-xl border border-white/10 object-cover"
-                onError={(e) => {
-                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
-                }}
-              />
-              <span className="font-display text-lg font-bold tracking-wider">
-                DANSEL <span className="gradient-text">SHOP</span>
-              </span>
+    <footer className="relative z-10 mt-auto border-t border-white/10 bg-midnight-950">
+      <div className="relative h-24 overflow-hidden sm:h-28">
+        <FireFooterEffect />
+      </div>
+
+      <div className="relative border-t border-white/5 px-4 pb-20 pt-4 sm:px-6 lg:px-8 lg:pb-6 lg:pt-5">
+        {/* Mobile: compact 3-column links */}
+        <div className="lg:hidden">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <Link to="/shop" className="font-display text-sm font-bold tracking-wider">
+              DANSEL <span className="gradient-text">SHOP</span>
             </Link>
-            <p className="mt-4 text-sm leading-relaxed text-white/50">
-              Premium authorized digital accounts and subscription access. Trusted,
-              affordable, and delivered fast.
-            </p>
-            <div className="mt-6 space-y-2 text-sm text-white/60">
-              <a
-                href={`mailto:${shopContact.email}`}
-                className="flex items-center gap-2 transition-colors hover:text-accent-violet"
-              >
-                <Mail className="h-4 w-4" />
-                {shopContact.email}
+            <div className="flex items-center gap-3 text-[10px] text-white/45">
+              <a href={`mailto:${shopContact.email}`} className="hover:text-brand-bright">
+                <Mail className="h-3.5 w-3.5" />
               </a>
-              {shopContact.messengerEnabled && shopContact.messengerUrl && (
-                <a
-                  href={shopContact.messengerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 transition-colors hover:text-accent-violet"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Messenger
-                </a>
-              )}
               <a
                 href={shopContact.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 transition-colors hover:text-accent-violet"
+                className="hover:text-brand-bright"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-[10px]">
+            <div>
+              <p className="mb-1 font-semibold uppercase tracking-wider text-white/70">Shop</p>
+              {footerLinks.shop.map((link) => (
+                <Link
+                  key={link.to + link.label}
+                  to={link.to}
+                  className="block py-0.5 text-white/45 hover:text-brand"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div>
+              <p className="mb-1 font-semibold uppercase tracking-wider text-white/70">
+                Support
+              </p>
+              {footerLinks.support.map((link) => (
+                <Link
+                  key={link.to + link.label}
+                  to={link.to}
+                  className="block py-0.5 text-white/45 hover:text-brand"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div>
+              <p className="mb-1 font-semibold uppercase tracking-wider text-white/70">Legal</p>
+              {footerLinks.legal.map((link) => (
+                <Link
+                  key={link.to + link.label}
+                  to={link.to}
+                  className="block py-0.5 text-white/45 hover:text-brand"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <p className="mt-3 border-t border-white/10 pt-2 text-center text-[10px] text-white/35">
+            © {new Date().getFullYear()} DANSEL SHOP
+          </p>
+        </div>
+
+        {/* Desktop: full footer */}
+        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-8">
+          <div>
+            <Link to="/shop" className="inline-flex items-center gap-2">
+              <img
+                src="/shop-logo.png"
+                alt="Dansel Shop logo"
+                className="h-8 w-8 rounded-lg border border-white/10 object-cover"
+                onError={(e) => {
+                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                }}
+              />
+              <span className="font-display text-base font-bold tracking-wider">
+                DANSEL <span className="gradient-text">SHOP</span>
+              </span>
+            </Link>
+            <p className="mt-2 text-xs text-white/50">
+              Premium digital accounts · Fast delivery
+            </p>
+            <div className="mt-3 flex flex-col gap-1 text-xs text-white/55">
+              <a
+                href={`mailto:${shopContact.email}`}
+                className="inline-flex items-center gap-1.5 hover:text-brand-bright"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                {shopContact.email}
+              </a>
+              <a
+                href={shopContact.telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-brand-bright"
+              >
+                <Send className="h-3.5 w-3.5" />
                 {shopContact.telegramUsername}
               </a>
             </div>
           </div>
 
           <div>
-            <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
               Shop
             </h4>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-2 space-y-1">
               {footerLinks.shop.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-white/50 transition-colors hover:text-accent-violet"
-                  >
+                <li key={link.to + link.label}>
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/shop?category=Writing Tools"
+                  className="text-xs text-white/50 hover:text-brand"
+                >
+                  Writing Tools
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
               Support
             </h4>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-2 space-y-1">
               {footerLinks.support.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-white/50 transition-colors hover:text-accent-violet"
-                  >
+                <li key={link.to + link.label}>
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link to="/home#reviews" className="text-xs text-white/50 hover:text-brand">
+                  Reviews
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
               Legal
             </h4>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-2 space-y-1">
               {footerLinks.legal.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-white/50 transition-colors hover:text-accent-violet"
-                  >
+                <li key={link.to + link.label}>
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/policies#refund"
+                  className="text-xs text-white/50 hover:text-brand"
+                >
+                  Refund
+                </Link>
+              </li>
             </ul>
-            <p className="mt-6 text-xs text-white/40">
-              Business Hours: {shopContact.hours}
-            </p>
+            <p className="mt-2 text-[10px] text-white/35">Hours: {shopContact.hours}</p>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-sm text-white/40">
-            © {new Date().getFullYear()} DANSEL SHOP. All rights reserved.
-          </p>
-          <p className="text-xs text-white/30">
-            Premium digital access · Authorized subscriptions · Fast delivery
-          </p>
+        <div className="mt-4 hidden items-center justify-between border-t border-white/10 pt-3 lg:flex">
+          <p className="text-[11px] text-white/40">© {new Date().getFullYear()} DANSEL SHOP</p>
+          <p className="text-[10px] text-white/30">Authorized subscriptions · Secure checkout</p>
         </div>
       </div>
     </footer>

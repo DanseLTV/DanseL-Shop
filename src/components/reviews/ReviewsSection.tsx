@@ -87,7 +87,7 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
             <button
               type="button"
               onClick={prev}
-              className="rounded-full border border-white/15 bg-white/5 p-2 text-white/70 transition-all hover:border-accent-violet/40 hover:text-white"
+              className="rounded-full border border-white/15 bg-white/5 p-2 text-white/70 transition-all hover:border-brand/40 hover:text-white"
               aria-label="Previous review"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -103,7 +103,7 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
                   }}
                   className={`h-2 rounded-full transition-all ${
                     i === current
-                      ? 'w-8 bg-accent-violet'
+                      ? 'w-8 bg-brand'
                       : 'w-2 bg-white/20 hover:bg-white/40'
                   }`}
                   aria-label={`Go to review ${i + 1}`}
@@ -113,7 +113,7 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
             <button
               type="button"
               onClick={next}
-              className="rounded-full border border-white/15 bg-white/5 p-2 text-white/70 transition-all hover:border-accent-violet/40 hover:text-white"
+              className="rounded-full border border-white/15 bg-white/5 p-2 text-white/70 transition-all hover:border-brand/40 hover:text-white"
               aria-label="Next review"
             >
               <ChevronRight className="h-5 w-5" />

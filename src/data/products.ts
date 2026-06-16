@@ -40,8 +40,8 @@ export const getFeaturedProducts = () => products.filter((p) => p.featured)
 export const formatPrice = (amount: number) =>
   `${shopConfig.currencySymbol}${amount.toLocaleString('en-PH')}`
 
-export const getCategories = () => {
-  const counts = products.reduce<Record<string, number>>((acc, p) => {
+export const getCategoriesFromProducts = (productList: Product[]) => {
+  const counts = productList.reduce<Record<string, number>>((acc, p) => {
     acc[p.category] = (acc[p.category] || 0) + 1
     return acc
   }, {})
@@ -60,3 +60,5 @@ export const getCategories = () => {
     }
   })
 }
+
+export const getCategories = () => getCategoriesFromProducts(products)

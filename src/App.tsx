@@ -1,16 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
 import { OrderFlowProvider } from './context/OrderFlowContext'
-import { Navbar } from './components/layout/Navbar'
-import { Footer } from './components/layout/Footer'
-import { FloatingMessageButton } from './components/layout/FloatingMessageButton'
-import { MobileBottomNav } from './components/layout/MobileBottomNav'
+import { NotificationsProvider } from './context/NotificationsContext'
+import { AppChrome, AppFooter, AppMain, AppShell } from './components/layout/AppChrome'
 import { ScrollToTop } from './components/layout/ScrollToTop'
 import { AnimatedPageLayout } from './components/layout/AnimatedPageLayout'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AdminRoute } from './components/auth/AdminRoute'
+import { AdminLayout } from './components/admin/AdminLayout'
+import { LandingPage } from './pages/LandingPage'
 import { HomePage } from './pages/HomePage'
 import { ShopPage } from './pages/ShopPage'
+import { CartPage } from './pages/CartPage'
 import { OrderPage } from './pages/OrderPage'
 import { PoliciesPage } from './pages/PoliciesPage'
 import { LoginPage } from './pages/LoginPage'
@@ -18,22 +20,52 @@ import { SignupPage } from './pages/SignupPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { AccountPage } from './pages/AccountPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
-import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
+import { AdminProductsPage } from './pages/admin/AdminProductsPage'
+import { AdminProductEditPage } from './pages/admin/AdminProductEditPage'
+import { AdminLandingCarouselPage } from './pages/admin/AdminLandingCarouselPage'
 import { MyOrdersPage } from './pages/MyOrdersPage'
+
+function LegacyOrderRedirect() {
+  const { orderId } = useParams()
+  if (!orderId) return <Navigate to="/orders" replace />
+  return <Navigate to={`/orders?order=${encodeURIComponent(orderId)}`} replace />
+}
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <OrderFlowProvider>
+        <CartProvider>
+          <NotificationsProvider>
+          <OrderFlowProvider>
           <ScrollToTop />
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1 overflow-x-hidden">
+          <AppShell>
+            <AppChrome />
+            <AppMain>
               <Routes>
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<AdminOverviewPage />} />
+                  <Route path="orders" element={<AdminOrdersPage />} />
+                  <Route path="products" element={<AdminProductsPage />} />
+                  <Route path="products/new" element={<AdminProductEditPage />} />
+                  <Route path="products/:productId" element={<AdminProductEditPage />} />
+                  <Route path="landing-carousel" element={<AdminLandingCarouselPage />} />
+                  <Route path="hero-carousel" element={<Navigate to="/admin/landing-carousel" replace />} />
+                </Route>
                 <Route element={<AnimatedPageLayout />}>
-                  <Route path="/" element={<ShopPage />} />
+                  <Route path="/" element={<LandingPage />} />
                   <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/cart" element={<CartPage />} />
                   <Route path="/home" element={<HomePage />} />
                   <Route path="/policies" element={<PoliciesPage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -56,6 +88,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/orders/:orderId"
+                    element={
+                      <ProtectedRoute>
+                        <LegacyOrderRedirect />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/orders"
                     element={
                       <ProtectedRoute>
@@ -63,31 +103,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path="/orders/:orderId"
-                    element={
-                      <ProtectedRoute>
-                        <MyOrdersPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboardPage />
-                      </AdminRoute>
-                    }
-                  />
                 </Route>
               </Routes>
-            </main>
-            <Footer />
-            <FloatingMessageButton />
-            <MobileBottomNav />
-          </div>
+            </AppMain>
+            <AppFooter />
+          </AppShell>
         </OrderFlowProvider>
+          </NotificationsProvider>
+        </CartProvider>
       </BrowserRouter>
     </AuthProvider>
   )

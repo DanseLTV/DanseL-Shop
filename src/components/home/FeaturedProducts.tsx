@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { Product } from '../../types'
 import { useOrderNavigation } from '../../hooks/useOrderNavigation'
+import { useCart } from '../../context/CartContext'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GradientButton } from '../ui/GradientButton'
 import { ProductCard } from '../shop/ProductCard'
 import { ProductDetailModal } from '../shop/ProductDetailModal'
 import { useProducts } from '../../hooks/useProducts'
+import { ToastBanner } from '../ui/ToastBanner'
 
 export function FeaturedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [cartToast, setCartToast] = useState<string | null>(null)
   const goToOrder = useOrderNavigation()
+  const { addItem, getQuantity } = useCart()
   const { products } = useProducts()
   const featured = products.filter((p) => p.featured)
 
@@ -19,8 +23,25 @@ export function FeaturedProducts() {
     goToOrder(product.id, product)
   }
 
+  const handleAddToCart = useCallback(
+    (product: Product) => {
+      if (product.availability === 'Out of Stock') return
+      addItem(product.id)
+      setCartToast(`${product.name} added to cart`)
+      setSelectedProduct(null)
+    },
+    [addItem]
+  )
+
   return (
     <section className="section-padding relative">
+      {cartToast && (
+        <ToastBanner
+          message={cartToast}
+          variant="success"
+          onDismiss={() => setCartToast(null)}
+        />
+      )}
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
           <SectionHeading
@@ -38,6 +59,8 @@ export function FeaturedProducts() {
                 index={i}
                 onViewDetails={setSelectedProduct}
                 onOrder={handleOrder}
+                onAddToCart={handleAddToCart}
+                cartQuantity={getQuantity(product.id)}
               />
             </ScrollReveal>
           ))}
@@ -45,7 +68,7 @@ export function FeaturedProducts() {
 
         <ScrollReveal delay={0.3}>
           <div className="mt-12 text-center">
-            <GradientButton to="/" variant="outline">
+            <GradientButton to="/shop" variant="outline">
               View All Products
             </GradientButton>
           </div>
@@ -56,6 +79,8 @@ export function FeaturedProducts() {
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
         onOrder={handleOrder}
+        onAddToCart={handleAddToCart}
+        cartQuantity={selectedProduct ? getQuantity(selectedProduct.id) : 0}
       />
     </section>
   )

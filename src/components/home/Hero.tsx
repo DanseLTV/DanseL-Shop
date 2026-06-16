@@ -1,87 +1,82 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { AnimatedBackground } from '../ui/AnimatedBackground'
 import { GradientButton } from '../ui/GradientButton'
+import { BackNavLink } from '../ui/BackNavLink'
 import { fadeInUp, staggerContainer } from '../../utils/animations'
+
+const anchorLinks = [
+  { label: 'How to order', hash: '#how-to-order' },
+  { label: 'Reviews', hash: '#reviews' },
+  { label: 'FAQ', hash: '#faq' },
+  { label: 'Contact', hash: '#contact' },
+]
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-screen items-center overflow-hidden pt-20">
+    <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20">
       <AnimatedBackground />
 
-      <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-32">
+      <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <BackNavLink to="/shop" label="Back to home" className="mb-6" />
         <motion.div
+          className="text-center"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="mx-auto max-w-4xl text-center"
         >
           <motion.div
             variants={fadeInUp}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent-violet/30 bg-accent-violet/10 px-4 py-2 text-sm text-accent-violet"
+            className="text-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-4 py-2 !tracking-[0.16em]"
           >
             <Sparkles className="h-4 w-4" />
-            Premium Digital Accounts · Authorized Access
+            About DANSEL SHOP
           </motion.div>
 
           <motion.h1
             variants={fadeInUp}
-            className="font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-7xl"
+            className="text-display-md"
           >
-            Your Gateway to{' '}
-            <span className="gradient-text">Premium Digital</span>{' '}
-            Subscriptions
+            Trusted premium access,{' '}
+            <span className="gradient-text">explained clearly</span>
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
-            className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/60 sm:text-lg lg:text-xl"
+            className="text-lead mx-auto mt-5 max-w-2xl"
           >
-            DANSEL SHOP delivers trusted, affordable premium account access with
-            fast delivery and replacement guarantee. Stream, create, and work
-            without breaking the bank.
+            Learn how ordering works, what we guarantee, and why customers choose
+            us — then browse the shop when you are ready.
           </motion.p>
 
           <motion.div
             variants={fadeInUp}
-            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+            className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <GradientButton to="/shop" size="lg">
               Browse Shop
               <ArrowRight className="h-5 w-5" />
             </GradientButton>
-            <GradientButton to="/#how-to-order" variant="outline" size="lg">
-              How to Order
-            </GradientButton>
           </motion.div>
 
-          <motion.div
+          <motion.nav
             variants={fadeInUp}
-            className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-3"
+            aria-label="On this page"
+            className="mt-8 flex flex-wrap items-center justify-center gap-2"
           >
-            {[
-              { icon: Shield, label: 'Trusted & Verified', value: '1000+' },
-              { icon: Zap, label: 'Avg. Delivery Time', value: '15–60 min' },
-              { icon: Sparkles, label: 'Happy Customers', value: '500+' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="glass-card flex items-center gap-4 p-4 sm:flex-col sm:gap-2 sm:p-6"
+            {anchorLinks.map((item) => (
+              <Link
+                key={item.hash}
+                to={`/home${item.hash}`}
+                className="text-caption rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-medium transition-colors hover:border-brand/40 hover:text-white"
               >
-                <stat.icon className="h-6 w-6 text-accent-violet sm:mb-2" />
-                <div className="sm:text-center">
-                  <p className="font-display text-xl font-bold text-white sm:text-2xl">
-                    {stat.value}
-                  </p>
-                  <p className="text-xs text-white/50 sm:text-sm">{stat.label}</p>
-                </div>
-              </div>
+                {item.label}
+              </Link>
             ))}
-          </motion.div>
+          </motion.nav>
         </motion.div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-midnight-950 to-transparent" />
     </section>
   )
 }

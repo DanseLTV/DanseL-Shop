@@ -1,20 +1,28 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, Package } from 'lucide-react'
+import { Search, SlidersHorizontal, Package, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useOrderNavigation } from '../hooks/useOrderNavigation'
+import { useCart } from '../context/CartContext'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
+import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 import { ProductCard } from '../components/shop/ProductCard'
 import { ProductDetailModal } from '../components/shop/ProductDetailModal'
 import { OrderGuide } from '../components/shop/OrderGuide'
-import { ShopTrustStrip } from '../components/shop/ShopTrustStrip'
+import { ShopProductCarousel } from '../components/shop/ShopProductCarousel'
 import { useProducts } from '../hooks/useProducts'
+import { ProductGridSkeleton } from '../components/shop/ProductGridSkeleton'
+import { EmptyState } from '../components/ui/EmptyState'
+import { MyOrdersStrip } from '../components/order/MyOrdersStrip'
+import { ToastBanner } from '../components/ui/ToastBanner'
 
 export function ShopPage() {
-  const { products: liveProducts } = useProducts()
+  const { products: liveProducts, loading: productsLoading } = useProducts()
+  const { addItem, getQuantity } = useCart()
   const [searchParams, setSearchParams] = useSearchParams()
   const goToOrder = useOrderNavigation()
+  const [cartToast, setCartToast] = useState<string | null>(null)
   const initialCategory = searchParams.get('category') || 'All'
 
   const [search, setSearch] = useState('')
@@ -27,6 +35,22 @@ export function ShopPage() {
     const cat = searchParams.get('category')
     if (cat) setCategory(cat)
   }, [searchParams])
+
+  useEffect(() => {
+    const productId = searchParams.get('product')
+    if (!productId || productsLoading) return
+    const product = liveProducts.find((p) => p.id === productId)
+    if (product) setSelectedProduct(product)
+  }, [searchParams, liveProducts, productsLoading])
+
+  const closeProductModal = useCallback(() => {
+    setSelectedProduct(null)
+    if (searchParams.has('product')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('product')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const setCategoryFilter = (cat: string) => {
     setCategory(cat)
@@ -59,33 +83,62 @@ export function ShopPage() {
     [liveProducts, search, category, sortBy]
   )
 
+  const focusProduct = useCallback(
+    (product: Product) => {
+      const next = new URLSearchParams(searchParams)
+      next.set('product', product.id)
+      setSearchParams(next, { replace: true })
+      setSelectedProduct(product)
+    },
+    [searchParams, setSearchParams]
+  )
+
   const handleOrder = (product: Product) => {
     setSelectedProduct(null)
     goToOrder(product.id, product)
   }
 
+  const handleAddToCart = useCallback(
+    (product: Product) => {
+      if (product.availability === 'Out of Stock') return
+      addItem(product.id)
+      setCartToast(`${product.name} added to cart`)
+      setSelectedProduct(null)
+    },
+    [addItem]
+  )
+
   return (
     <div className="relative min-h-screen pt-20 pb-24 lg:pb-20">
       <AnimatedBackground />
 
+      {cartToast && (
+        <ToastBanner
+          message={cartToast}
+          variant="success"
+          onDismiss={() => setCartToast(null)}
+        />
+      )}
+
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="pb-6 pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent-violet">
-              DANSEL SHOP
-            </p>
-            <h1 className="font-display text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
-              Premium digital{' '}
-              <span className="gradient-text">subscriptions</span>
-            </h1>
-            <p className="mt-3 max-w-2xl text-base text-white/55 sm:text-lg">
-              Browse {liveProducts.length} products — sign in only when you&apos;re ready to checkout.
-            </p>
-          </div>
+          <CustomerPageHeader
+            badge="Home"
+            title={
+              <>
+                Premium digital <span className="gradient-text">subscriptions</span>
+              </>
+            }
+            subtitle={`Browse ${liveProducts.length} products — your orders and status appear above when signed in.`}
+          />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.04}>
+          <MyOrdersStrip className="mb-6" />
         </ScrollReveal>
 
         <ScrollReveal delay={0.05}>
-          <ShopTrustStrip />
+          <ShopProductCarousel onProductSelect={focusProduct} />
         </ScrollReveal>
 
         <ScrollReveal delay={0.08}>
@@ -102,12 +155,12 @@ export function ShopPage() {
                 placeholder="Search streaming, AI, writing tools…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 backdrop-blur-sm transition-colors focus:border-accent-violet/50 focus:outline-none focus:ring-1 focus:ring-accent-violet/30"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 backdrop-blur-sm transition-colors focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-brand/30"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="hidden items-center gap-2 text-sm text-white/45 sm:flex">
+              <div className="text-caption hidden items-center gap-2 sm:flex">
                 <Package className="h-4 w-4" />
                 {filtered.length} shown
               </div>
@@ -120,7 +173,7 @@ export function ShopPage() {
                 onChange={(e) =>
                   setSortBy(e.target.value as 'name' | 'price-asc' | 'price-desc')
                 }
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-accent-violet/50 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-brand/50 focus:outline-none"
               >
                 <option value="name" className="bg-midnight-900">
                   Name A–Z
@@ -135,7 +188,7 @@ export function ShopPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          <div className="mt-4 flex gap-2 scroll-x pb-1 scrollbar-thin">
             {['All', ...new Set(liveProducts.map((p) => p.category))].map((cat) => (
               <button
                 key={cat}
@@ -143,8 +196,8 @@ export function ShopPage() {
                 onClick={() => setCategoryFilter(cat)}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   category === cat
-                    ? 'bg-gradient-to-r from-accent-violet to-accent-purple text-white shadow-glow'
-                    : 'border border-white/10 bg-white/5 text-white/60 hover:border-accent-violet/30 hover:text-white'
+                    ? 'bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-magenta text-midnight-950 shadow-neon-cyan'
+                    : 'border border-white/10 bg-white/5 text-white/60 hover:border-neon-cyan/40 hover:text-neon-cyan hover:shadow-neon-cyan'
                 }`}
               >
                 {cat}
@@ -153,47 +206,49 @@ export function ShopPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="glass-card py-16 text-center">
-            <p className="text-lg text-white/60">No products found.</p>
-            <p className="mt-2 text-sm text-white/40">
-              Try a different search or category.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSearch('')
-                setCategoryFilter('All')
-              }}
-              className="mt-6 text-sm font-medium text-accent-violet hover:text-accent-cyan"
-            >
-              Clear filters
-            </button>
-          </div>
+        {productsLoading ? (
+          <ProductGridSkeleton />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={<ShoppingBag className="h-7 w-7" />}
+            title="No products found"
+            description="Try a different search or category, or clear your filters."
+            actionLabel="Clear filters"
+            onAction={() => {
+              setSearch('')
+              setCategoryFilter('All')
+            }}
+          />
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4 xl:gap-5">
             {filtered.map((product, i) => (
               <ScrollReveal key={product.id} delay={Math.min(i * 0.04, 0.24)}>
-                <ProductCard
-                  product={product}
-                  index={i}
-                  onViewDetails={setSelectedProduct}
-                  onOrder={handleOrder}
-                />
+                <div id={`shop-product-${product.id}`} className="scroll-mt-28">
+                  <ProductCard
+                    product={product}
+                    index={i}
+                    onViewDetails={setSelectedProduct}
+                    onOrder={handleOrder}
+                    onAddToCart={handleAddToCart}
+                    cartQuantity={getQuantity(product.id)}
+                  />
+                </div>
               </ScrollReveal>
             ))}
           </div>
         )}
 
-        <p className="mt-10 text-center text-sm text-white/40">
+        <p className="text-caption mt-10 text-center">
           {filtered.length} of {liveProducts.length} products · from ₱{minPrice}
         </p>
       </div>
 
       <ProductDetailModal
         product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onClose={closeProductModal}
         onOrder={handleOrder}
+        onAddToCart={handleAddToCart}
+        cartQuantity={selectedProduct ? getQuantity(selectedProduct.id) : 0}
       />
     </div>
   )

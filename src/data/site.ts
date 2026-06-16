@@ -34,13 +34,13 @@ export const whyChooseUs = [
 export const orderSteps = [
   {
     step: '01',
-    title: 'Browse & Choose',
-    description: 'Pick a product from the shop. No sign-in needed while browsing.',
+    title: 'Browse & Add to Cart',
+    description: 'Add one or many products to your cart, or use Buy now for a single item.',
   },
   {
     step: '02',
-    title: 'Sign In to Order',
-    description: 'Tap Order — sign in or create a free account, then continue checkout.',
+    title: 'Sign In to Checkout',
+    description: 'Open your cart, sign in if needed, then proceed to checkout.',
   },
   {
     step: '03',

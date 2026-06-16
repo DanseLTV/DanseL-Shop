@@ -67,8 +67,8 @@ export function ContactSection() {
             const Icon = card.icon
             const content = (
               <GlassCard hover className="h-full p-6">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-accent-violet/20">
-                  <Icon className="h-5 w-5 text-accent-violet" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-brand/20">
+                  <Icon className="h-5 w-5 text-brand" />
                 </div>
                 <p className="text-xs font-medium uppercase tracking-wider text-white/40">
                   {card.description}

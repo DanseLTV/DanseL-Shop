@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 interface GradientButtonProps {
   to?: string
+  replace?: boolean
   href?: string
   onClick?: () => void
   variant?: 'primary' | 'outline'
@@ -15,6 +16,7 @@ interface GradientButtonProps {
 
 export function GradientButton({
   to,
+  replace = false,
   href,
   onClick,
   variant = 'primary',
@@ -40,7 +42,7 @@ export function GradientButton({
   if (to) {
     return (
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <Link to={to} className={classes}>
+        <Link to={to} replace={replace} onClick={onClick} className={classes}>
           {children}
         </Link>
       </motion.div>

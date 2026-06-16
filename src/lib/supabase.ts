@@ -33,6 +33,7 @@ export interface OrderRecord {
   notes: string | null
   proof_url?: string | null
   status: 'pending' | 'paid' | 'delivered' | 'cancelled'
+  quantity?: number
   created_at: string
   customer_last_read_at?: string | null
   admin_last_read_at?: string | null
@@ -45,8 +46,33 @@ export interface OrderMessage {
   sender_role: UserRole
   body: string
   created_at: string
+  updated_at?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
+}
+
+export function isMessageDeleted(msg: OrderMessage) {
+  return Boolean(msg.deleted_at)
+}
+
+export function activeMessagesOnly(messages: OrderMessage[]) {
+  return messages.filter((m) => !m.deleted_at)
 }
 
 export interface OrderWithCustomer extends OrderRecord {
   profiles?: { username: string } | null
+}
+
+export type NotificationType = 'order_status' | 'new_order' | 'new_message'
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  body: string
+  order_id: string | null
+  link_path: string
+  read_at: string | null
+  created_at: string
 }

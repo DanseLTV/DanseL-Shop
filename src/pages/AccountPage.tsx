@@ -1,6 +1,16 @@
 import { useState } from 'react'
-import { User, LogOut, ShoppingBag, MessageCircle, Trash2, Shield } from 'lucide-react'
+import {
+  User,
+  LogOut,
+  ShoppingBag,
+  MessageCircle,
+  Trash2,
+  Shield,
+  FileText,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useLogoutConfirm } from '../hooks/useLogoutConfirm'
+import { LogoutConfirmModal } from '../components/auth/LogoutConfirmModal'
 import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
@@ -10,9 +20,9 @@ import { BackNavLink } from '../components/ui/BackNavLink'
 import { DeleteAccountModal } from '../components/account/DeleteAccountModal'
 import { AccountNavRow } from '../components/account/AccountNavRow'
 import { useOrderNavigation } from '../hooks/useOrderNavigation'
-
 export function AccountPage() {
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
+  const { logoutConfirmOpen, requestLogout, cancelLogout, confirmLogout } = useLogoutConfirm()
   const goToOrder = useOrderNavigation()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const username = profile?.username ?? 'customer'
@@ -22,7 +32,7 @@ export function AccountPage() {
     <div className="relative min-h-screen pt-24">
       <AnimatedBackground />
       <div className="relative mx-auto max-w-lg px-4 pb-24 sm:px-6">
-        <BackNavLink to="/" label="Back to shop" className="mb-5" />
+        <BackNavLink to="/shop" label="Back to home" className="mb-5" />
 
         <ScrollReveal>
           <SectionHeading
@@ -35,8 +45,8 @@ export function AccountPage() {
 
         <ScrollReveal delay={0.08}>
           <GlassCard className="mt-6 overflow-hidden">
-            <div className="flex items-center gap-4 border-b border-white/10 bg-gradient-to-br from-accent-violet/15 via-white/[0.02] to-accent-cyan/10 px-5 py-5 sm:px-6">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-violet to-accent-cyan shadow-lg shadow-accent-violet/20">
+            <div className="flex items-center gap-4 border-b border-white/10 bg-gradient-to-br from-brand/15 via-white/[0.02] to-brand-bright/10 px-5 py-5 sm:px-6">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-bright shadow-lg shadow-brand/20">
                 <User className="h-7 w-7 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -45,7 +55,7 @@ export function AccountPage() {
                 </p>
                 <p className="mt-0.5 truncate text-sm text-white/55">{user?.email}</p>
                 {isAdmin && (
-                  <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-accent-violet/40 bg-accent-violet/15 px-2.5 py-0.5 text-xs font-medium text-accent-violet">
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-brand/40 bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-brand">
                     <Shield className="h-3 w-3" />
                     Admin
                   </span>
@@ -60,10 +70,22 @@ export function AccountPage() {
               </GradientButton>
 
               <AccountNavRow
+                to="/shop"
+                icon={ShoppingBag}
+                title="Browse Shop"
+                subtitle="View all products"
+              />
+              <AccountNavRow
                 icon={ShoppingBag}
                 title="Place New Order"
-                subtitle="Browse products and checkout"
+                subtitle="Go to checkout"
                 onClick={() => goToOrder()}
+              />
+              <AccountNavRow
+                to="/policies"
+                icon={FileText}
+                title="Policies & FAQ"
+                subtitle="Terms, refunds, and guarantees"
               />
 
               {isAdmin && (
@@ -72,7 +94,7 @@ export function AccountPage() {
                   icon={Shield}
                   title="Admin Dashboard"
                   subtitle="Manage orders and messages"
-                  iconClassName="text-accent-violet"
+                  iconClassName="text-brand"
                 />
               )}
             </div>
@@ -80,7 +102,7 @@ export function AccountPage() {
             <div className="border-t border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
               <button
                 type="button"
-                onClick={() => signOut()}
+                onClick={requestLogout}
                 className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium text-white/55 transition-colors hover:bg-white/5 hover:text-white"
               >
                 <LogOut className="h-4 w-4" />
@@ -114,6 +136,12 @@ export function AccountPage() {
           open={deleteModalOpen}
           username={username}
           onClose={() => setDeleteModalOpen(false)}
+        />
+        <LogoutConfirmModal
+          open={logoutConfirmOpen}
+          onCancel={cancelLogout}
+          onConfirm={confirmLogout}
+          placement="center"
         />
       </div>
     </div>

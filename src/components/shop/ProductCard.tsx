@@ -8,97 +8,113 @@ interface ProductCardProps {
   product: Product
   onViewDetails: (product: Product) => void
   onOrder: (product: Product) => void
+  onAddToCart?: (product: Product) => void
+  cartQuantity?: number
   index?: number
+  /** Eager-load images (admin live preview) */
+  priorityImage?: boolean
 }
 
 const availabilityStyles = {
-  'In Stock': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  Limited: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  'Out of Stock': 'bg-red-500/20 text-red-400 border-red-500/30',
+  'In Stock': 'bg-status-success/15 text-status-success border-status-success/25',
+  Limited: 'bg-status-warning/15 text-status-warning border-status-warning/25',
+  'Out of Stock': 'bg-status-error/15 text-status-error border-status-error/25',
 }
 
-export function ProductCard({ product, onViewDetails, onOrder, index = 0 }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onViewDetails,
+  onOrder,
+  onAddToCart,
+  cartQuantity = 0,
+  index = 0,
+  priorityImage = false,
+}: ProductCardProps) {
   const isAvailable = product.availability !== 'Out of Stock'
 
   return (
     <motion.article
-      whileHover={{ y: -6, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
-      className="glass-card-hover group relative flex flex-col overflow-hidden"
+      whileHover={{ y: -3, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
+      className="glass-card-hover group relative flex min-w-0 flex-col overflow-hidden rounded-xl sm:rounded-2xl"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       {product.badge && (
-        <span className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-gradient-to-r from-accent-violet to-accent-cyan px-3 py-1 text-xs font-bold text-white shadow-glow">
-          <Sparkles className="h-3 w-3" />
-          {product.badge}
+        <span className="neon-badge absolute right-1 top-1 z-10 flex max-w-[calc(100%-0.5rem)] items-center gap-0.5 truncate px-1.5 py-0.5 text-[8px] backdrop-blur-sm sm:right-1.5 sm:top-1.5 sm:text-[9px]">
+          <Sparkles className="h-2 w-2 shrink-0 text-crown-light sm:h-2.5 sm:w-2.5" />
+          <span className="truncate">{product.badge}</span>
         </span>
       )}
 
       <button
         type="button"
         onClick={() => onViewDetails(product)}
-        className="relative block h-52 w-full sm:h-56"
+        className="relative block h-32 w-full sm:h-[9rem] md:h-40 lg:h-[11rem]"
         aria-label={`View ${product.name} details`}
       >
         <ProductImage
           product={product}
           className="h-full w-full"
-          overlay={
-            <div className="absolute inset-0 flex items-end justify-center pb-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <span className="rounded-full border border-white/20 bg-black/40 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
-                Tap for details
-              </span>
-            </div>
-          }
+          priority={priorityImage}
         />
       </button>
 
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-accent-cyan">
-          {product.category}
-        </p>
-        <h3 className="mt-1 font-display text-lg font-semibold leading-snug text-white">
-          {product.name}
-        </h3>
+      <div className="flex min-w-0 flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5 md:p-3">
+        <div className="min-w-0">
+          <p className="truncate text-[8px] font-semibold uppercase tracking-[0.1em] text-crown-silver sm:text-[9px]">
+            {product.category}
+          </p>
+          <h3 className="mt-0.5 line-clamp-1 font-display text-[10px] font-semibold leading-tight text-white sm:text-[11px] md:text-xs lg:text-sm">
+            {product.name}
+          </h3>
+        </div>
 
-        <p className="mb-4 mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-white/50">
-          {product.description}
-        </p>
-
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <span
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${availabilityStyles[product.availability]}`}
+            className={`rounded-full border px-1.5 py-px text-[8px] font-medium sm:text-[9px] ${availabilityStyles[product.availability]}`}
           >
-            {product.availability}
+            {product.availability === 'In Stock' ? (
+              <>
+                <span className="sm:hidden">Stock</span>
+                <span className="hidden sm:inline">{product.availability}</span>
+              </>
+            ) : (
+              product.availability
+            )}
           </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-white/60">
+          <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-px text-[8px] text-white/60 sm:text-[9px]">
             {product.duration}
           </span>
         </div>
 
-        <div className="flex items-end justify-between gap-3 border-t border-white/5 pt-4">
-          <div>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
-              From
-            </span>
-            <p className="font-display text-2xl font-bold text-white">
-              {formatPrice(product.price)}
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
+        <div className="flex items-center justify-between gap-1.5 border-t border-white/5 pt-1.5 sm:gap-2 sm:pt-2">
+          <p className="shrink-0 font-display text-xs font-bold tabular-nums text-white sm:text-sm md:text-base">
+            {formatPrice(product.price)}
+          </p>
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-1">
             <button
               type="button"
               onClick={() => onViewDetails(product)}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs font-medium text-white/80 transition-all hover:border-accent-violet/40 hover:bg-white/10"
+              className="btn-neon-ghost shrink-0 px-1.5 py-1 text-[8px] sm:px-2 sm:py-1 sm:text-[9px] md:text-[10px]"
             >
               Details
             </button>
+            {onAddToCart && (
+              <button
+                type="button"
+                onClick={() => onAddToCart(product)}
+                disabled={!isAvailable}
+                className="btn-neon-accent shrink-0 px-1.5 py-1 text-[8px] disabled:cursor-not-allowed sm:px-2 sm:py-1 sm:text-[9px] md:text-[10px]"
+              >
+                {cartQuantity > 0 ? `(${cartQuantity})` : 'Cart'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onOrder(product)}
               disabled={!isAvailable}
-              className="rounded-xl bg-gradient-to-r from-accent-violet to-accent-purple px-4 py-2.5 text-xs font-semibold text-white shadow-glow transition-all hover:shadow-[0_6px_28px_rgba(139,92,246,0.45)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-glow shrink-0 px-1.5 py-1 text-[8px] disabled:cursor-not-allowed disabled:opacity-40 sm:px-2 sm:py-1 sm:text-[9px] md:px-2.5 md:py-1.5 md:text-[10px]"
             >
-              Order
+              Buy
             </button>
           </div>
         </div>

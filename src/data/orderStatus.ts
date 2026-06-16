@@ -13,7 +13,7 @@ export const orderStatusMeta: Record<
   },
   paid: {
     label: 'Payment confirmed',
-    description: 'Payment verified. Your product is being prepared for delivery.',
+    description: 'Payment confirmed. Your product is being prepared for delivery.',
     color: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
   },
   delivered: {
@@ -30,7 +30,7 @@ export const orderStatusMeta: Record<
 
 export const orderPipelineSteps: { status: OrderStatus; title: string }[] = [
   { status: 'pending', title: 'Order placed' },
-  { status: 'paid', title: 'Payment verified' },
+  { status: 'paid', title: 'Payment confirmed' },
   { status: 'delivered', title: 'Delivered' },
 ]
 

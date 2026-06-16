@@ -2,14 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  /* Scrollable regions — mouse wheel, trackpad, touch, and keyboard friendly */
+  .scroll-y {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
-    @apply bg-midnight-950 text-white antialiased;
+    @apply min-h-dvh bg-midnight-950 text-white antialiased;
+    overflow-x: hidden;
     font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight text-white;
   }
 
   @media (max-width: 1023px) {
@@ -19,27 +52,55 @@
   }
 
   ::selection {
-    @apply bg-accent-violet/40 text-white;
+    background-color: rgba(231, 231, 236, 0.4);
+    @apply text-white;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.32) rgba(255, 255, 255, 0.06);
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-midnight-900;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-accent-violet/40;
+    background-color: rgba(255, 255, 255, 0.28);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-accent-violet/60;
+    background-color: rgba(255, 255, 255, 0.42);
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(0, 232, 255, 0.65);
+    outline-offset: 2px;
+    box-shadow: 0 0 12px rgba(0, 232, 255, 0.35);
   }
 }
 
 @layer components {
+  /* ── Neon design tokens ── */
+  :root {
+    --neon-cyan: #00e8ff;
+    --neon-magenta: #ff2bd6;
+    --neon-violet: #a855f7;
+  }
+
   .glass-card {
     @apply rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -49,18 +110,135 @@
     @apply glass-card transition-all duration-300;
   }
 
+  .glass-card-hover:focus-visible {
+    @apply border-white/40 ring-2 ring-white/20 ring-offset-2 ring-offset-midnight-950;
+  }
+
   .glass-card-hover:hover {
-    @apply border-accent-violet/30 bg-white/[0.07];
-    box-shadow: 0 8px 40px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 232, 255, 0.28);
+    background-color: rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 8px 40px rgba(0, 232, 255, 0.12),
+      0 0 24px rgba(255, 43, 214, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-accent-violet via-accent-purple to-accent-cyan bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      var(--neon-cyan) 0%,
+      #e8e8ec 38%,
+      var(--neon-magenta) 72%,
+      #ffffff 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .text-royal-gold {
+    background-image: linear-gradient(180deg, #fff8e7 0%, #ffc45a 45%, #c9922e 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .btn-royal-primary {
+    @apply rounded-xl border border-amber-200/25 bg-amber-100/[0.08] text-amber-50 backdrop-blur-md transition-all;
+  }
+
+  .btn-royal-primary:hover {
+    @apply border-amber-200/40 bg-amber-100/[0.14] text-white;
+    box-shadow: 0 0 24px rgba(255, 196, 90, 0.2);
+  }
+
+  .btn-royal-outline {
+    @apply rounded-xl border border-amber-200/30 bg-transparent text-amber-100/90 backdrop-blur-sm transition-all;
+  }
+
+  .btn-royal-outline:hover {
+    @apply border-amber-200/50 bg-amber-100/[0.06] text-white;
+  }
+
+  .btn-royal-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold uppercase tracking-wider transition-all;
+    background: linear-gradient(180deg, #f5d78e 0%, #d4a84a 42%, #9a7020 100%);
+    color: #1a1008;
+    box-shadow:
+      0 4px 24px rgba(255, 196, 90, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .btn-royal-gold:hover {
+    filter: brightness(1.08);
+    box-shadow:
+      0 6px 32px rgba(255, 196, 90, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-royal-gold-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-amber-200/40 bg-transparent px-7 py-3 text-sm font-semibold uppercase tracking-wider text-amber-100/90 backdrop-blur-sm transition-all;
+  }
+
+  .btn-royal-gold-outline:hover {
+    @apply border-amber-200/60 bg-amber-100/[0.06] text-white;
+  }
+
+  /* Template-style primary CTA — dark fill, gold border */
+  .btn-royal-kingdom {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-amber-200/45 bg-black/50 px-7 py-3 text-sm font-semibold uppercase tracking-wider text-amber-50 backdrop-blur-sm transition-all;
+  }
+
+  .btn-royal-kingdom:hover {
+    @apply border-amber-200/65 bg-black/65 text-white;
+    box-shadow: 0 0 28px rgba(255, 196, 90, 0.2);
+  }
+
+  /* Typography scale — use across customer + admin UI */
+  .text-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.2em];
+    color: #fbfbfd;
+  }
+
+  .text-lead {
+    @apply text-base font-normal leading-relaxed text-white/70 sm:text-lg sm:leading-relaxed;
+  }
+
+  .text-body {
+    @apply text-sm font-normal leading-relaxed text-white/65;
+  }
+
+  .text-caption {
+    @apply text-xs font-medium leading-snug text-white/50;
+  }
+
+  .text-subtle {
+    @apply text-sm text-white/55;
+  }
+
+  .text-price-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45;
+  }
+
+  .text-price {
+    @apply font-display text-2xl font-bold tabular-nums tracking-tight text-white;
+  }
+
+  .text-display-sm {
+    @apply font-display text-3xl font-bold tracking-tight sm:text-4xl;
+  }
+
+  .text-display-md {
+    @apply font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl;
+  }
+
+  .text-display-lg {
+    @apply font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl;
   }
 
   .gradient-border {
     position: relative;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.1));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
     padding: 1px;
     border-radius: 1rem;
   }
@@ -70,13 +248,20 @@
   }
 
   .btn-glow {
-    @apply relative overflow-hidden rounded-xl bg-gradient-to-r from-accent-violet via-accent-purple to-accent-cyan px-6 py-3 font-semibold text-white transition-all duration-300;
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
-  }
-
-  .btn-glow:hover {
-    box-shadow: 0 6px 30px rgba(139, 92, 246, 0.5), 0 0 20px rgba(34, 211, 238, 0.2);
-    transform: translateY(-1px);
+    @apply relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-all duration-300;
+    color: #05060f;
+    background-image: linear-gradient(
+      135deg,
+      var(--neon-cyan) 0%,
+      #7dd3fc 28%,
+      var(--neon-violet) 62%,
+      var(--neon-magenta) 100%
+    );
+    background-size: 200% 200%;
+    box-shadow:
+      0 0 20px rgba(0, 232, 255, 0.4),
+      0 0 40px rgba(255, 43, 214, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 
   .btn-glow::before {
@@ -84,26 +269,113 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.15),
-      transparent
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 60%
     );
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
+    transform: translateX(-120%);
+    transition: transform 0.55s ease;
+  }
+
+  .btn-glow:hover {
+    background-position: 100% 50%;
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 28px rgba(0, 232, 255, 0.65),
+      0 0 56px rgba(255, 43, 214, 0.28),
+      0 4px 16px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
   }
 
   .btn-glow:hover::before {
-    transform: translateX(100%);
+    transform: translateX(120%);
+  }
+
+  .btn-glow:active {
+    transform: translateY(0);
+    box-shadow:
+      0 0 16px rgba(0, 232, 255, 0.45),
+      0 0 32px rgba(255, 43, 214, 0.2);
   }
 
   .btn-outline {
-    @apply rounded-xl border border-white/20 bg-white/5 px-6 py-3 font-semibold text-white backdrop-blur-sm transition-all duration-300;
+    @apply relative overflow-hidden rounded-xl border px-6 py-3 font-semibold text-white backdrop-blur-sm transition-all duration-300;
+    border-color: rgba(0, 232, 255, 0.45);
+    background: linear-gradient(135deg, rgba(0, 232, 255, 0.08) 0%, rgba(255, 43, 214, 0.06) 100%);
+    box-shadow: 0 0 12px rgba(0, 232, 255, 0.12);
   }
 
   .btn-outline:hover {
-    @apply border-accent-violet/50 bg-white/10;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+    border-color: rgba(0, 232, 255, 0.85);
+    background: linear-gradient(135deg, rgba(0, 232, 255, 0.16) 0%, rgba(255, 43, 214, 0.12) 100%);
+    color: var(--neon-cyan);
+    box-shadow:
+      0 0 24px rgba(0, 232, 255, 0.35),
+      0 0 48px rgba(255, 43, 214, 0.12),
+      inset 0 0 20px rgba(0, 232, 255, 0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Secondary / ghost buttons (product cards, toolbars) */
+  .btn-neon-ghost {
+    @apply rounded-xl border px-3 py-2.5 text-xs font-medium transition-all duration-300;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .btn-neon-ghost:hover {
+    border-color: rgba(0, 232, 255, 0.5);
+    background: rgba(0, 232, 255, 0.08);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 18px rgba(0, 232, 255, 0.2);
+  }
+
+  .btn-neon-accent {
+    @apply rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-300;
+    border-color: rgba(255, 43, 214, 0.45);
+    background: linear-gradient(135deg, rgba(255, 43, 214, 0.12) 0%, rgba(168, 85, 247, 0.1) 100%);
+    color: #f9a8ff;
+    box-shadow: 0 0 12px rgba(255, 43, 214, 0.15);
+  }
+
+  .btn-neon-accent:hover {
+    border-color: rgba(255, 43, 214, 0.8);
+    background: linear-gradient(135deg, rgba(255, 43, 214, 0.22) 0%, rgba(168, 85, 247, 0.18) 100%);
+    color: #fce7ff;
+    box-shadow:
+      0 0 22px rgba(255, 43, 214, 0.35),
+      0 0 40px rgba(168, 85, 247, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-neon-accent:disabled,
+  .btn-neon-ghost:disabled,
+  .btn-glow:disabled {
+    transform: none;
+    box-shadow: none;
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Admin / status action buttons */
+  .btn-neon-success {
+    @apply rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #10b981 0%, #00e8ff 100%);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+  }
+
+  .btn-neon-success:hover {
+    box-shadow: 0 0 24px rgba(0, 232, 255, 0.45), 0 0 40px rgba(16, 185, 129, 0.25);
+    transform: translateY(-1px);
+  }
+
+  .neon-badge {
+    @apply rounded-full px-2 py-0.5 text-[10px] font-bold;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+    color: #05060f;
+    box-shadow: 0 0 12px rgba(0, 232, 255, 0.45);
   }
 
   .section-padding {
@@ -112,8 +384,247 @@
 
   .mesh-bg {
     background-image:
-      radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-      radial-gradient(at 80% 10%, rgba(34, 211, 238, 0.1) 0px, transparent 50%),
-      radial-gradient(at 50% 80%, rgba(236, 72, 153, 0.08) 0px, transparent 50%);
+      radial-gradient(at 20% 20%, rgba(255, 255, 255, 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 10%, rgba(255, 255, 255, 0.05) 0px, transparent 50%),
+      radial-gradient(at 50% 80%, rgba(255, 255, 255, 0.03) 0px, transparent 50%);
   }
+
+}
+
+/* Premium monochrome footer shimmer — platinum/silver glow */
+.fire-footer-fx {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(10, 10, 12, 0.12) 50%,
+    transparent 100%
+  );
+}
+
+.fire-footer-fx__base {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #8c8c97,
+    #f4f4f6,
+    #c9c9d1,
+    #f4f4f6,
+    #8c8c97,
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: fire-base-shimmer 3s linear infinite;
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.5),
+    0 0 28px rgba(255, 255, 255, 0.18);
+}
+
+.fire-footer-fx__haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  height: 70%;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 100%,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.1) 45%,
+    transparent 70%
+  );
+  animation: fire-haze-breathe 2.5s ease-in-out infinite alternate;
+}
+
+.fire-footer-fx__bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.fire-footer-fx__bubbles--back {
+  filter: blur(6px) contrast(2.1) brightness(1.08);
+  -webkit-filter: blur(6px) contrast(2.1) brightness(1.08);
+  opacity: 0.85;
+}
+
+.fire-footer-fx__bubbles--front {
+  filter: blur(5px) contrast(2.3) brightness(1.12) saturate(1.15);
+  -webkit-filter: blur(5px) contrast(2.3) brightness(1.12) saturate(1.15);
+  z-index: 3;
+}
+
+.fire-footer-fx__bubble {
+  position: absolute;
+  left: var(--position);
+  bottom: -2.5rem;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  animation:
+    fire-goo-move var(--time) ease-in infinite var(--delay),
+    fire-goo-size var(--time) ease-in infinite var(--delay);
+  will-change: bottom, transform, width, height;
+}
+
+@keyframes fire-goo-move {
+  0% {
+    bottom: -2.5rem;
+    transform: translateX(0);
+  }
+  30% {
+    bottom: 2rem;
+    transform: translateX(6px);
+  }
+  55% {
+    bottom: 4.5rem;
+    transform: translateX(-5px);
+  }
+  80% {
+    bottom: 6.5rem;
+    transform: translateX(4px);
+  }
+  100% {
+    bottom: var(--distance);
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes fire-goo-size {
+  0%,
+  65% {
+    width: var(--size);
+    height: var(--size);
+  }
+  100% {
+    width: 0;
+    height: 0;
+  }
+}
+
+@keyframes fire-base-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes fire-haze-breathe {
+  0% {
+    opacity: 0.7;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fire-footer-fx__bubble {
+    animation: none;
+    opacity: 0.35;
+  }
+
+  .fire-footer-fx__base,
+  .fire-footer-fx__haze {
+    animation: none;
+  }
+
+  .btn-glow::before {
+    display: none;
+  }
+
+  .btn-glow:hover,
+  .btn-outline:hover,
+  .btn-neon-ghost:hover,
+  .btn-neon-accent:hover,
+  .btn-neon-success:hover {
+    transform: none;
+  }
+}
+
+/* Side edge fire — subtle frame on large screens */
+.fire-edge-fx {
+  position: fixed;
+  top: 4.5rem;
+  bottom: 0;
+  width: 5rem;
+  overflow: hidden;
+  opacity: 0.42;
+}
+
+.fire-edge-fx--left {
+  left: 0;
+  -webkit-mask-image: linear-gradient(to right, black 15%, transparent 100%);
+  mask-image: linear-gradient(to right, black 15%, transparent 100%);
+}
+
+.fire-edge-fx--right {
+  right: 0;
+  -webkit-mask-image: linear-gradient(to left, black 15%, transparent 100%);
+  mask-image: linear-gradient(to left, black 15%, transparent 100%);
+}
+
+.fire-edge-fx__haze {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    transparent 70%
+  );
+}
+
+.fire-edge-fx__bubbles {
+  position: absolute;
+  inset: 0;
+  filter: blur(5px) contrast(2.1) brightness(1.08);
+  -webkit-filter: blur(5px) contrast(2.1) brightness(1.08);
+}
+
+/* Admin product crop — drag handles on all sides (react-image-crop) */
+.product-cropper {
+  position: relative;
+  width: 100%;
+  background: #05060f;
+}
+
+.product-cropper__react-crop .ReactCrop__crop-selection {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 9999px rgba(10, 10, 12, 0.72);
+}
+
+.product-cropper__react-crop .ReactCrop__drag-handle {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #0a0a0c;
+  border-radius: 2px;
+}
+
+.product-cropper__react-crop .ReactCrop__drag-handle.ord-n,
+.product-cropper__react-crop .ReactCrop__drag-handle.ord-s {
+  width: 28px;
+  height: 10px;
+  margin-left: -14px;
+}
+
+.product-cropper__react-crop .ReactCrop__drag-handle.ord-e,
+.product-cropper__react-crop .ReactCrop__drag-handle.ord-w {
+  width: 10px;
+  height: 28px;
+  margin-top: -14px;
 }

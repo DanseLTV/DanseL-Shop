@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { products as baseProducts } from '../data/products'
+import { products as staticProducts } from '../data/products'
 import type { Product } from '../types'
 import { supabase } from '../lib/supabase'
+import { shopRowToProduct, type ShopProductRow } from '../utils/shopProductMapper'
 
 export interface ProductOverrideRow {
   product_id: string
@@ -13,66 +14,117 @@ export interface ProductOverrideRow {
   image: string | null
 }
 
-function mergeProducts(base: Product[], overrides: ProductOverrideRow[]): Product[] {
+export interface UseProductsOptions {
+  /** Admin panel: include hidden/disabled products */
+  includeDisabled?: boolean
+}
+
+function mergeLegacyOverrides(base: Product[], overrides: ProductOverrideRow[]): Product[] {
   if (!overrides.length) return base
   const map = new Map(overrides.map((o) => [o.product_id, o]))
   return base.map((p) => {
     const o = map.get(p.id)
     if (!o) return p
+    const overrideImage =
+      o.image != null && String(o.image).trim() !== '' ? String(o.image).trim() : null
+    const image = overrideImage ?? p.image
+    const overrideIsCustom =
+      overrideImage != null && !overrideImage.startsWith('/products/')
     return {
       ...p,
-      name: o.name ?? p.name,
-      description: o.description ?? p.description,
-      price: o.price ?? p.price,
-      duration: o.duration ?? p.duration,
+      name: o.name?.trim() || p.name,
+      description: o.description?.trim() || p.description,
+      price: o.price != null && !Number.isNaN(Number(o.price)) ? Number(o.price) : p.price,
+      duration: o.duration?.trim() || p.duration,
       availability: o.availability ?? p.availability,
-      image: o.image ?? p.image,
-      imageFit: 'cover',
+      image,
+      imageFit: overrideIsCustom ? 'cover' : p.imageFit ?? 'cover',
     }
   })
 }
 
-export function useProducts() {
+export function useProducts(options?: UseProductsOptions) {
+  const includeDisabled = options?.includeDisabled ?? false
+  const [shopRows, setShopRows] = useState<ShopProductRow[]>([])
   const [overrides, setOverrides] = useState<ProductOverrideRow[]>([])
+  const [usesDatabase, setUsesDatabase] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadOverrides = useCallback(async (options?: { silent?: boolean }) => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
-    if (!options?.silent) setLoading(true)
-    const { data, error: fetchError } = await supabase
-      .from('product_overrides')
-      .select('product_id, name, description, price, duration, availability, image')
+  const loadAll = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!supabase) {
+        setLoading(false)
+        return
+      }
+      if (!opts?.silent) setLoading(true)
 
-    if (fetchError) {
-      setError(fetchError.message)
-      setOverrides([])
-    } else {
-      setError('')
-      setOverrides((data as ProductOverrideRow[]) ?? [])
-    }
-    if (!options?.silent) setLoading(false)
-  }, [])
+      const [productsRes, overridesRes] = await Promise.all([
+        supabase
+          .from('shop_products')
+          .select(
+            'id, name, category, description, price, duration, availability, featured, badge, features, image_gradient, image, image_fit, enabled, sort_order'
+          )
+          .order('sort_order', { ascending: true })
+          .order('name', { ascending: true }),
+        supabase
+          .from('product_overrides')
+          .select('product_id, name, description, price, duration, availability, image'),
+      ])
+
+      if (productsRes.error) {
+        const lower = productsRes.error.message.toLowerCase()
+        if (lower.includes('does not exist')) {
+          setUsesDatabase(false)
+          setShopRows([])
+        } else {
+          setError(productsRes.error.message)
+        }
+      } else {
+        setError('')
+        const rows = (productsRes.data as ShopProductRow[]) ?? []
+        setShopRows(rows)
+        setUsesDatabase(rows.length > 0)
+      }
+
+      if (!overridesRes.error) {
+        setOverrides((overridesRes.data as ProductOverrideRow[]) ?? [])
+      } else {
+        setOverrides([])
+      }
+
+      if (!opts?.silent) setLoading(false)
+    },
+    []
+  )
 
   useEffect(() => {
-    loadOverrides()
-  }, [loadOverrides])
+    void loadAll()
+  }, [loadAll])
 
-  // Live updates: when admin saves a product, every open shop refreshes automatically.
   useEffect(() => {
     const client = supabase
     if (!client) return
 
+    // Unique channel name per hook instance — reusing a fixed name across
+    // multiple mounted components makes Supabase throw
+    // "cannot add 'postgres_changes' callbacks ... after subscribe()".
+    const channelName = `shop-catalog-changes-${Math.random().toString(36).slice(2)}`
+
     const channel = client
-      .channel('product-overrides-changes')
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shop_products' },
+        () => {
+          void loadAll({ silent: true })
+        }
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'product_overrides' },
         () => {
-          void loadOverrides({ silent: true })
+          void loadAll({ silent: true })
         }
       )
       .subscribe()
@@ -80,15 +132,30 @@ export function useProducts() {
     return () => {
       void client.removeChannel(channel)
     }
-  }, [loadOverrides])
+  }, [loadAll])
 
-  const products = useMemo(() => mergeProducts(baseProducts, overrides), [overrides])
+  const products = useMemo(() => {
+    let list: Product[]
+
+    if (usesDatabase && shopRows.length > 0) {
+      const visible = includeDisabled ? shopRows : shopRows.filter((row) => row.enabled)
+      list = visible.map(shopRowToProduct)
+    } else {
+      list = staticProducts
+    }
+
+    return mergeLegacyOverrides(list, overrides)
+  }, [shopRows, overrides, usesDatabase, includeDisabled])
+
+  const allShopRows = shopRows
 
   return {
     products,
+    shopRows: allShopRows,
+    usesDatabase,
     overrides,
     loading,
     error,
-    reload: loadOverrides,
+    reload: loadAll,
   }
 }

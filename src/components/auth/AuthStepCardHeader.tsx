@@ -14,7 +14,7 @@ export function AuthStepCardHeader({
   stepLabel,
 }: AuthStepCardHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-6">
+    <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2 sm:px-5 sm:py-2.5">
       <button
         type="button"
         onClick={onBack}

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Lock, LogIn, Mail, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
-import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
 import { AuthConfigBanner } from '../components/auth/AuthConfigBanner'
+import { AuthPageShell } from '../components/auth/AuthPageShell'
+import { isAdminEmail, markAdminWelcomeToast } from '../constants/admin'
 import { isEmailNotConfirmedError } from '../utils/authErrors'
 import { isAccountVerified } from '../utils/authHelpers'
 
@@ -18,13 +18,47 @@ export function LoginPage() {
   const [loginEmail, setLoginEmail] = useState<string | null>(null)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [loading, setLoading] = useState(false)
-  const { signIn, resendConfirmationEmail, isConfigured, user, profile, loading: authLoading } =
+  const { signIn, resendConfirmationEmail, isConfigured, user, profile, isAdmin, loading: authLoading } =
     useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  const redirect = searchParams.get('redirect') || '/shop'
 
   const needsEmailConfirmation = Boolean(error && isEmailNotConfirmedError(error))
+
+  const loginSubtitle = (() => {
+    const dest = searchParams.get('redirect')
+    if (dest?.includes('/order') && !dest?.includes('/orders')) {
+      return 'Sign in to complete your order'
+    }
+    if (dest?.includes('/orders')) return 'Sign in to view your orders and messages'
+    if (dest?.includes('/account')) return 'Sign in to manage your account'
+    return 'Sign in with your username or email to shop and track orders'
+  })()
+
+  const goAfterLogin = useCallback(
+    (
+      resolvedEmail: string | null | undefined,
+      signedInEmail?: string | null,
+      options?: { showAdminToast?: boolean }
+    ) => {
+      const email = resolvedEmail ?? signedInEmail ?? user?.email ?? null
+      const dest = decodeURIComponent(redirect)
+      const adminLogin = isAdminEmail(email) || isAdmin
+
+      if (adminLogin) {
+        const adminDest = dest.startsWith('/admin') ? dest : '/admin'
+        if (options?.showAdminToast) {
+          markAdminWelcomeToast()
+        }
+        navigate(adminDest, { replace: true, state: { adminWelcome: options?.showAdminToast } })
+        return
+      }
+
+      navigate(dest, { replace: true })
+    },
+    [navigate, redirect, user?.email, isAdmin]
+  )
 
   useEffect(() => {
     if (!loading) return
@@ -40,9 +74,9 @@ export function LoginPage() {
   useEffect(() => {
     if (authLoading) return
     if (user && isAccountVerified(profile, user)) {
-      navigate(decodeURIComponent(redirect), { replace: true })
+      goAfterLogin(user.email, user.email)
     }
-  }, [authLoading, user, profile, redirect, navigate])
+  }, [authLoading, user, profile, goAfterLogin])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +86,10 @@ export function LoginPage() {
     setLoading(true)
 
     try {
-      const { error: err, loginEmail: resolvedEmail } = await signIn(identifier, password)
+      const { error: err, loginEmail: resolvedEmail, user: signedInUser } = await signIn(
+        identifier,
+        password
+      )
 
       if (resolvedEmail) setLoginEmail(resolvedEmail)
 
@@ -61,7 +98,7 @@ export function LoginPage() {
         return
       }
 
-      navigate(decodeURIComponent(redirect), { replace: true })
+      goAfterLogin(resolvedEmail, signedInUser?.email, { showAdminToast: true })
     } catch {
       setError('Sign in failed. Please try again.')
     } finally {
@@ -82,28 +119,18 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen pt-24">
-      <AnimatedBackground />
-      <div className="relative mx-auto max-w-md px-4 pb-20 pt-8">
-        <ScrollReveal>
-          <div className="mb-8 text-center">
-            <span className="mb-4 inline-block rounded-full border border-accent-violet/30 bg-accent-violet/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-accent-violet">
-              Welcome back
-            </span>
-            <h1 className="font-display text-3xl font-bold text-white">Sign In</h1>
-            <p className="mt-2 text-sm text-white/50">
-              {searchParams.get('redirect')?.includes('/order')
-                ? 'Sign in to complete your order'
-                : 'Use your username or email to sign in'}
-            </p>
-          </div>
+    <AuthPageShell>
+      <div className="mb-4 text-center">
+        <span className="mb-2 inline-block rounded-full border border-brand/30 bg-brand/10 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-brand">
+          Welcome back
+        </span>
+        <h1 className="font-display text-2xl font-bold text-white sm:text-3xl">Sign In</h1>
+        <p className="mt-1.5 text-sm text-white/50">{loginSubtitle}</p>
+      </div>
 
-          {!isConfigured && <AuthConfigBanner />}
+      {!isConfigured && <AuthConfigBanner />}
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="glass-card space-y-5 p-6 sm:p-8"
-          >
+      <motion.form onSubmit={handleSubmit} className="glass-card space-y-4 p-5 sm:p-6">
             {error && (
               <div className="space-y-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 <p>{error}</p>
@@ -119,7 +146,7 @@ export function LoginPage() {
                         type="button"
                         onClick={handleResend}
                         disabled={resendStatus === 'sending' || resendStatus === 'sent'}
-                        className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent-violet hover:text-accent-cyan disabled:opacity-60"
+                        className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand-bright disabled:opacity-60"
                       >
                         <Mail className="h-4 w-4" />
                         {resendStatus === 'sent'
@@ -146,8 +173,8 @@ export function LoginPage() {
                 autoComplete="username"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none"
-                placeholder="username or you@email.com"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-brand/50 focus:outline-none"
+                placeholder="Enter username or email"
               />
             </div>
 
@@ -165,8 +192,8 @@ export function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 text-sm text-white placeholder-white/30 focus:border-accent-violet/50 focus:outline-none"
-                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 text-sm text-white placeholder-white/30 focus:border-brand/50 focus:outline-none"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -180,7 +207,7 @@ export function LoginPage() {
               <div className="mt-2 text-right">
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-medium text-accent-violet hover:text-accent-cyan"
+                  className="text-xs font-medium text-brand hover:text-brand-bright"
                 >
                   Forgot password?
                 </Link>
@@ -195,15 +222,13 @@ export function LoginPage() {
             <p className="text-center text-sm text-white/50">
               No account yet?{' '}
               <Link
-                to={`/signup${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`}
-                className="font-medium text-accent-violet hover:text-accent-cyan"
+                to={`/signup${redirect !== '/shop' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`}
+                className="font-medium text-brand hover:text-brand-bright"
               >
                 Create account
               </Link>
             </p>
-          </motion.form>
-        </ScrollReveal>
-      </div>
-    </div>
+      </motion.form>
+    </AuthPageShell>
   )
 }

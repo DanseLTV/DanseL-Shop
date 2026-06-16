@@ -27,6 +27,7 @@ import {
   isUserAlreadyRegisteredError,
 } from '../utils/authErrors'
 import { normalizeOtpInput } from '../constants/authOtp'
+import { isAdminEmail } from '../constants/admin'
 import { withTimeoutOr } from '../utils/asyncHelpers'
 
 interface SignInResult {
@@ -277,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(sessionUser)
           setProfile(p)
         }
-        if (!cancelled && p?.role === 'admin') {
+        if (!cancelled && (p?.role === 'admin' || isAdminEmail(sessionUser.email))) {
           setAdminVerified(true)
         } else if (!cancelled) {
           const isAdm = await withTimeoutOr(
@@ -365,8 +366,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(sessionUser)
       setProfile(activeProfile)
 
-      if (activeProfile.role === 'admin') {
+      if (activeProfile.role === 'admin' || isAdminEmail(loginEmail)) {
         setAdminVerified(true)
+        if (isAdminEmail(loginEmail) && activeProfile.role !== 'admin') {
+          setProfile({ ...activeProfile, role: 'admin' })
+        }
       } else {
         setAdminVerified(false)
         void withTimeoutOr(checkIsAdminUid(sessionUser.id), 5000, { isAdmin: false }).then(
@@ -464,14 +468,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data: taken } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', normalized)
-        .maybeSingle()
+      const { data: available, error: availError } = await supabase.rpc('is_username_available', {
+        p_username: normalized,
+      })
 
-      if (taken) {
+      if (!availError && available === false) {
         return { error: 'Username is already taken' }
+      }
+
+      if (availError) {
+        const { data: taken } = await supabase
+          .from('profiles')
+          .select('id')
+          .ilike('username', normalized)
+          .maybeSingle()
+
+        if (taken) {
+          return { error: 'Username is already taken' }
+        }
       }
     } catch (err) {
       console.warn('Username check failed (continuing signup)', err)
@@ -602,7 +616,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null }
   }
 
-  const isAdmin = profile?.role === 'admin' || adminVerified === true
+  const isAdmin =
+    profile?.role === 'admin' || adminVerified === true || isAdminEmail(user?.email)
 
   return (
     <AuthContext.Provider
