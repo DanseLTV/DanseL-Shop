@@ -28,6 +28,7 @@ export function ShopProductCarousel({
         onProductSelect={onProductSelect}
         compact={compact}
         fiveUp={fiveUp}
+        landing={landing}
       />
     </div>
   )

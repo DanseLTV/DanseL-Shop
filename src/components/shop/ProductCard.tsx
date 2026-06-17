@@ -48,7 +48,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={() => onViewDetails(product)}
-        className="relative block h-32 w-full sm:h-[9rem] md:h-40 lg:h-[11rem]"
+        className="relative block h-36 w-full sm:h-40 md:h-44 lg:h-48"
         aria-label={`View ${product.name} details`}
       >
         <ProductImage
@@ -60,17 +60,17 @@ export function ProductCard({
 
       <div className="flex min-w-0 flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5 md:p-3">
         <div className="min-w-0">
-          <p className="truncate text-[8px] font-semibold uppercase tracking-[0.1em] text-crown-silver sm:text-[9px]">
+          <p className="truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-crown-silver sm:text-[10px]">
             {product.category}
           </p>
-          <h3 className="mt-0.5 line-clamp-1 font-display text-[10px] font-semibold leading-tight text-white sm:text-[11px] md:text-xs lg:text-sm">
+          <h3 className="mt-0.5 line-clamp-2 font-display text-xs font-semibold leading-tight text-white sm:text-sm lg:line-clamp-1">
             {product.name}
           </h3>
         </div>
 
         <div className="flex flex-wrap items-center gap-1">
           <span
-            className={`rounded-full border px-1.5 py-px text-[8px] font-medium sm:text-[9px] ${availabilityStyles[product.availability]}`}
+            className={`rounded-full border px-2 py-0.5 text-[9px] font-medium sm:text-[10px] ${availabilityStyles[product.availability]}`}
           >
             {product.availability === 'In Stock' ? (
               <>
@@ -81,20 +81,20 @@ export function ProductCard({
               product.availability
             )}
           </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-px text-[8px] text-white/60 sm:text-[9px]">
+          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] text-white/60 sm:text-[10px]">
             {product.duration}
           </span>
         </div>
 
         <div className="flex items-center justify-between gap-1.5 border-t border-white/5 pt-1.5 sm:gap-2 sm:pt-2">
-          <p className="shrink-0 font-display text-xs font-bold tabular-nums text-white sm:text-sm md:text-base">
+          <p className="shrink-0 font-display text-sm font-bold tabular-nums text-white sm:text-base">
             {formatPrice(product.price)}
           </p>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-1">
             <button
               type="button"
               onClick={() => onViewDetails(product)}
-              className="btn-neon-ghost shrink-0 px-1.5 py-1 text-[8px] sm:px-2 sm:py-1 sm:text-[9px] md:text-[10px]"
+              className="btn-neon-ghost shrink-0 px-2 py-1.5 text-[10px] sm:px-2.5 sm:py-1.5 sm:text-xs"
             >
               Details
             </button>
@@ -103,7 +103,7 @@ export function ProductCard({
                 type="button"
                 onClick={() => onAddToCart(product)}
                 disabled={!isAvailable}
-                className="btn-neon-accent shrink-0 px-1.5 py-1 text-[8px] disabled:cursor-not-allowed sm:px-2 sm:py-1 sm:text-[9px] md:text-[10px]"
+                className="btn-neon-accent shrink-0 px-2 py-1.5 text-[10px] disabled:cursor-not-allowed sm:px-2.5 sm:py-1.5 sm:text-xs"
               >
                 {cartQuantity > 0 ? `(${cartQuantity})` : 'Cart'}
               </button>
@@ -112,7 +112,7 @@ export function ProductCard({
               type="button"
               onClick={() => onOrder(product)}
               disabled={!isAvailable}
-              className="btn-glow shrink-0 px-1.5 py-1 text-[8px] disabled:cursor-not-allowed disabled:opacity-40 sm:px-2 sm:py-1 sm:text-[9px] md:px-2.5 md:py-1.5 md:text-[10px]"
+              className="btn-glow shrink-0 px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-1.5 sm:text-xs"
             >
               Buy
             </button>

@@ -14,6 +14,8 @@ interface ProductDetailModalProps {
   onOrder: (product: Product) => void
   onAddToCart?: (product: Product) => void
   cartQuantity?: number
+  /** Match shop / landing gold theme */
+  royalTheme?: boolean
 }
 
 export function ProductDetailModal({
@@ -22,6 +24,7 @@ export function ProductDetailModal({
   onOrder,
   onAddToCart,
   cartQuantity = 0,
+  royalTheme = false,
 }: ProductDetailModalProps) {
   const open = product !== null
 
@@ -43,7 +46,7 @@ export function ProductDetailModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-end justify-center overscroll-none sm:items-center sm:p-4"
+          className={`fixed inset-0 z-[100] flex items-end justify-center overscroll-none sm:items-center sm:p-4 ${royalTheme ? 'royal-theme' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="product-detail-title"

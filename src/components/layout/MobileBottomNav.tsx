@@ -61,19 +61,19 @@ export function MobileBottomNav() {
               key={item.to + item.label}
               to={item.to}
               className={`relative flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-medium transition-colors ${
-                active ? 'text-neon-cyan' : 'text-white/50 hover:text-white/80'
+                active ? 'text-amber-200' : 'text-white/50 hover:text-white/80'
               }`}
             >
               <span
                 className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
                   active
-                    ? 'bg-neon-cyan/15 shadow-neon-cyan ring-1 ring-neon-cyan/40'
-                    : 'hover:bg-neon-cyan/5'
+                    ? 'bg-amber-400/15 shadow-[0_0_16px_rgba(255,196,90,0.2)] ring-1 ring-amber-200/40'
+                    : 'hover:bg-amber-400/5'
                 }`}
               >
                 <Icon className="h-5 w-5" />
                 {badge > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-neon-cyan to-neon-magenta px-1 text-[9px] font-bold text-midnight-950 shadow-neon-cyan">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[#f5d78e] to-[#c9922e] px-1 text-[9px] font-bold text-[#1a1008] shadow-[0_0_10px_rgba(255,196,90,0.35)]">
                     {badge > 99 ? '99+' : badge}
                   </span>
                 )}

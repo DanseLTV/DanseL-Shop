@@ -5,10 +5,10 @@ import { Menu, X, User, LogOut, Shield, LogIn, UserPlus, Sparkles } from 'lucide
 import { useAuth } from '../../context/AuthContext'
 import { useLogoutConfirm } from '../../hooks/useLogoutConfirm'
 import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
-import { GradientButton } from '../ui/GradientButton'
 import { CartNavLink } from '../cart/CartNavLink'
 import { LANDING_PREVIEW_PATH } from '../../constants/landing'
 import { NotificationBell } from '../notifications/NotificationBell'
+import { BrandName } from '../ui/BrandName'
 
 const navLinks = [
   { label: 'Home', to: '/shop', exact: true },
@@ -45,6 +45,10 @@ export function Navbar() {
         : 'text-ink-muted hover:bg-white/5 hover:text-white'
     }`
 
+  const onLoginPage = location.pathname === '/login'
+  const onSignupPage = location.pathname === '/signup'
+  const onForgotPasswordPage = location.pathname === '/forgot-password'
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -61,14 +65,12 @@ export function Navbar() {
           <img
             src="/shop-logo.png"
             alt="Dansel Shop logo"
-            className="h-10 w-10 rounded-xl border border-white/10 object-cover shadow-glow"
+            className="h-10 w-10 rounded-xl border border-amber-200/20 object-cover shadow-[0_0_16px_rgba(255,196,90,0.15)]"
             onError={(e) => {
               ;(e.currentTarget as HTMLImageElement).style.display = 'none'
             }}
           />
-          <span className="font-display text-lg font-bold tracking-wider text-white transition-colors group-hover:text-brand">
-            DANSEL <span className="gradient-text">SHOP</span>
-          </span>
+          <BrandName className="font-display text-lg font-bold tracking-wider transition-[filter] group-hover:brightness-110" />
         </Link>
 
         <div className="hidden items-center gap-0.5 lg:flex">
@@ -78,7 +80,7 @@ export function Navbar() {
               <Link key={link.to} to={link.to} className={linkClass(active)}>
                 {link.label}
                 {active && (
-                  <span className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-crown-silver to-white" />
+                  <span className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-amber-200/70 to-amber-400/90" />
                 )}
               </Link>
             )
@@ -98,7 +100,7 @@ export function Navbar() {
           <CartNavLink
             className={`rounded-lg px-3 py-2 text-sm font-medium tracking-tight transition-colors ${
               location.pathname === '/cart'
-                ? 'text-brand-bright'
+                ? 'text-amber-200'
                 : 'text-ink-muted hover:bg-white/5 hover:text-white'
             }`}
             showLabel
@@ -111,22 +113,22 @@ export function Navbar() {
               <Link
                 to="/orders"
                 className={`${linkClass(location.pathname.startsWith('/orders'))} ${
-                  location.pathname.startsWith('/orders') ? 'text-brand-bright' : ''
+                  location.pathname.startsWith('/orders') ? 'text-amber-200' : ''
                 }`}
               >
                 My Orders
               </Link>
               <Link
                 to="/account"
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-brand/40"
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition-colors hover:border-amber-200/35"
               >
-                <User className="h-4 w-4 text-brand" />
+                <User className="h-4 w-4 text-amber-200/90" />
                 @{profile?.username ?? 'account'}
               </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-brand hover:bg-white/5"
+                  className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-amber-200/90 hover:bg-white/5"
                 >
                   <Shield className="h-4 w-4" />
                   Admin
@@ -143,17 +145,24 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
-              >
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </Link>
-              <GradientButton to="/signup" size="sm">
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </GradientButton>
+              {!onLoginPage && !onForgotPasswordPage && (
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Link>
+              )}
+              {!onSignupPage && (
+                <Link
+                  to="/signup"
+                  className="btn-royal-gold inline-flex items-center justify-center gap-2 px-4 py-2 text-sm"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Sign Up
+                </Link>
+              )}
             </>
           )}
         </div>
@@ -183,7 +192,7 @@ export function Navbar() {
                   to={link.to}
                   className={`rounded-lg px-4 py-3 text-sm font-medium ${
                     isLinkActive(location.pathname, link)
-                      ? 'bg-brand/15 text-white'
+                      ? 'bg-amber-400/10 text-amber-100'
                       : 'text-white/80 hover:bg-white/5'
                   }`}
                 >
@@ -195,7 +204,7 @@ export function Navbar() {
                 to="/cart"
                 className={`rounded-lg px-4 py-3 text-sm font-medium ${
                   location.pathname === '/cart'
-                    ? 'bg-brand/15 text-white'
+                    ? 'bg-amber-400/10 text-amber-100'
                     : 'text-white/80 hover:bg-white/5'
                 }`}
               >
@@ -223,7 +232,7 @@ export function Navbar() {
                     Account (@{profile?.username ?? 'account'})
                   </Link>
                   {isAdmin && (
-                    <Link to="/admin" className="rounded-lg px-4 py-3 text-sm text-brand">
+                    <Link to="/admin" className="rounded-lg px-4 py-3 text-sm text-amber-200/90">
                       Admin Dashboard
                     </Link>
                   )}
@@ -240,20 +249,24 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/login"
-                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="btn-glow flex items-center justify-center gap-2 px-4 py-3 text-sm"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Create Account
-                  </Link>
+                  {!onLoginPage && !onForgotPasswordPage && (
+                    <Link
+                      to="/login"
+                      className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      Sign In
+                    </Link>
+                  )}
+                  {!onSignupPage && (
+                    <Link
+                      to="/signup"
+                      className="btn-royal-gold flex items-center justify-center gap-2 px-4 py-3 text-sm"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Sign Up
+                    </Link>
+                  )}
                 </>
               )}
             </div>

@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div
       className={
         isLanding
-          ? 'relative flex min-h-dvh flex-col overflow-x-hidden lg:h-dvh lg:max-h-dvh lg:overflow-hidden'
+          ? 'relative flex min-h-dvh flex-col overflow-x-hidden'
           : isAuth
             ? 'relative flex h-dvh max-h-dvh flex-col overflow-hidden'
             : 'relative flex min-h-dvh flex-col overflow-x-hidden'
@@ -74,7 +74,7 @@ export function AppMain({ children }: { children: React.ReactNode }) {
     <main
       className={
         isLanding
-          ? 'relative z-10 flex min-h-0 flex-1 flex-col overflow-x-hidden lg:overflow-hidden'
+          ? 'relative z-10 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain scroll-smooth [-webkit-overflow-scrolling:touch]'
           : isAuth
             ? 'relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden pt-[4.25rem]'
             : 'relative z-10 flex flex-1 flex-col overflow-x-hidden'

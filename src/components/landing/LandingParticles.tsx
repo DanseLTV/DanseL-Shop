@@ -31,8 +31,8 @@ export function LandingParticles() {
       canvas.height = height * dpr
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      const count = Math.floor((width * height) / 12000)
-      particles = Array.from({ length: Math.min(count, 70) }, () => ({
+      const count = Math.floor((width * height) / 20000)
+      particles = Array.from({ length: Math.min(count, 40) }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
         vx: (Math.random() - 0.5) * 0.3,
@@ -52,6 +52,11 @@ export function LandingParticles() {
     }
 
     const draw = () => {
+      if (document.hidden) {
+        frame = requestAnimationFrame(draw)
+        return
+      }
+
       const { width, height } = canvas.getBoundingClientRect()
       ctx.clearRect(0, 0, width, height)
 
@@ -90,7 +95,7 @@ export function LandingParticles() {
     resize()
     draw()
     window.addEventListener('resize', resize)
-    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerleave', onLeave)
 
     return () => {

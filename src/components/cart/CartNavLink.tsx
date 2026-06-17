@@ -24,7 +24,7 @@ export function CartNavLink({
       <ShoppingCart className={iconClassName} />
       {showLabel && <span>Cart</span>}
       {itemCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-neon-cyan to-neon-magenta px-1 text-[10px] font-bold text-midnight-950 shadow-neon-cyan">
+        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[#f5d78e] to-[#c9922e] px-1 text-[10px] font-bold text-[#1a1008] shadow-[0_0_10px_rgba(255,196,90,0.35)]">
           {itemCount > 99 ? '99+' : itemCount}
         </span>
       )}

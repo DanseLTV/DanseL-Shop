@@ -389,6 +389,154 @@
       radial-gradient(at 50% 80%, rgba(255, 255, 255, 0.03) 0px, transparent 50%);
   }
 
+  /* ── Royal gold theme (shop / home — matches landing) ── */
+  .royal-theme .text-eyebrow {
+    color: #ffc45a;
+  }
+
+  .royal-theme .gradient-text {
+    background-image: linear-gradient(180deg, #fff8e7 0%, #ffc45a 45%, #c9922e 100%);
+  }
+
+  .royal-theme .glass-card-hover:hover {
+    border-color: rgba(255, 196, 90, 0.32);
+    background-color: rgba(255, 196, 90, 0.04);
+    box-shadow:
+      0 8px 40px rgba(255, 196, 90, 0.14),
+      0 0 24px rgba(255, 160, 60, 0.08),
+      inset 0 1px 0 rgba(255, 220, 150, 0.1);
+  }
+
+  .royal-theme .glass-card-hover:focus-visible {
+    @apply border-amber-200/40 ring-2 ring-amber-200/20 ring-offset-2 ring-offset-[#030302];
+  }
+
+  .royal-theme .neon-badge {
+    background: linear-gradient(135deg, #f5d78e, #c9922e);
+    color: #1a1008;
+    box-shadow: 0 0 12px rgba(255, 196, 90, 0.4);
+  }
+
+  .royal-theme .btn-glow {
+    color: #1a1008;
+    background-image: linear-gradient(180deg, #f5d78e 0%, #d4a84a 42%, #9a7020 100%);
+    background-size: 100% 100%;
+    box-shadow:
+      0 0 16px rgba(255, 196, 90, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .royal-theme .btn-glow:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 24px rgba(255, 196, 90, 0.5),
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .royal-theme .btn-glow:active {
+    box-shadow: 0 0 14px rgba(255, 196, 90, 0.4);
+  }
+
+  .royal-theme .btn-neon-ghost:hover {
+    border-color: rgba(255, 196, 90, 0.45);
+    background: rgba(255, 196, 90, 0.08);
+    color: #ffc45a;
+    box-shadow: 0 0 16px rgba(255, 196, 90, 0.18);
+  }
+
+  .royal-theme .btn-neon-accent {
+    border-color: rgba(255, 196, 90, 0.35);
+    background: linear-gradient(135deg, rgba(255, 196, 90, 0.12) 0%, rgba(201, 146, 46, 0.1) 100%);
+    color: #f5d78e;
+    box-shadow: 0 0 10px rgba(255, 196, 90, 0.12);
+  }
+
+  .royal-theme .btn-neon-accent:hover {
+    border-color: rgba(255, 196, 90, 0.65);
+    background: linear-gradient(135deg, rgba(255, 196, 90, 0.22) 0%, rgba(201, 146, 46, 0.16) 100%);
+    color: #fff8e7;
+    box-shadow:
+      0 0 20px rgba(255, 196, 90, 0.3),
+      0 0 36px rgba(255, 160, 60, 0.12);
+  }
+
+  .royal-theme .text-brand,
+  .royal-theme .text-brand-bright {
+    color: #ffc45a;
+  }
+
+  .royal-theme .text-crown-silver {
+    color: rgba(255, 196, 90, 0.65);
+  }
+
+  .royal-theme .text-caption {
+    color: rgba(255, 220, 150, 0.45);
+  }
+
+  .royal-theme .text-lead {
+    color: rgba(255, 235, 200, 0.72);
+  }
+
+  .royal-theme article.glass-card-hover h3 {
+    color: #fff8e7;
+  }
+
+  .royal-theme article.glass-card-hover .font-display.tabular-nums {
+    background-image: linear-gradient(180deg, #fff8e7 0%, #ffc45a 55%, #d4a84a 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .royal-theme .btn-outline {
+    border-color: rgba(255, 196, 90, 0.4);
+    background: linear-gradient(135deg, rgba(255, 196, 90, 0.08) 0%, rgba(201, 146, 46, 0.06) 100%);
+    color: #ffc45a;
+    box-shadow: 0 0 10px rgba(255, 196, 90, 0.1);
+  }
+
+  .royal-theme .btn-outline:hover {
+    border-color: rgba(255, 196, 90, 0.75);
+    background: linear-gradient(135deg, rgba(255, 196, 90, 0.16) 0%, rgba(201, 146, 46, 0.12) 100%);
+    color: #fff8e7;
+    box-shadow: 0 0 22px rgba(255, 196, 90, 0.28);
+  }
+
+  .royal-theme article h3 {
+    color: #fff8e7;
+  }
+
+  .royal-theme article .bg-gradient-to-r.from-brand {
+    background-image: linear-gradient(to right, #f5d78e, #ffc45a, #c9922e);
+    color: #1a1008;
+    box-shadow: 0 0 18px rgba(255, 196, 90, 0.32);
+  }
+
+  .royal-theme article button.border-white\/15:hover {
+    border-color: rgba(255, 196, 90, 0.4);
+    color: #fff8e7;
+  }
+
+  .royal-theme button[aria-label='Previous product']:hover,
+  .royal-theme button[aria-label='Next product']:hover {
+    border-color: rgba(255, 196, 90, 0.45);
+    color: #fff8e7;
+    box-shadow: 0 0 16px rgba(255, 196, 90, 0.2);
+  }
+
+  .royal-theme .text-price {
+    background-image: linear-gradient(180deg, #fff8e7 0%, #ffc45a 55%, #d4a84a 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .royal-theme .bg-brand\/20 {
+    background-color: rgba(255, 196, 90, 0.18);
+  }
+
 }
 
 /* Premium monochrome footer shimmer — platinum/silver glow */

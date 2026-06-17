@@ -5,7 +5,7 @@ import type { Product } from '../types'
 import { useOrderNavigation } from '../hooks/useOrderNavigation'
 import { useCart } from '../context/CartContext'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
+import { RoyalPageBackground } from '../components/ui/RoyalPageBackground'
 import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 import { ProductCard } from '../components/shop/ProductCard'
 import { ProductDetailModal } from '../components/shop/ProductDetailModal'
@@ -109,8 +109,10 @@ export function ShopPage() {
   )
 
   return (
-    <div className="relative min-h-screen pt-20 pb-24 lg:pb-20">
-      <AnimatedBackground />
+    <div className="royal-theme relative min-h-screen bg-[#030302] pt-20 pb-24 lg:pb-20">
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
+        <RoyalPageBackground />
+      </div>
 
       {cartToast && (
         <ToastBanner
@@ -120,16 +122,21 @@ export function ShopPage() {
         />
       )}
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <CustomerPageHeader
-            badge="Home"
+            align="center"
             title={
-              <>
-                Premium digital <span className="gradient-text">subscriptions</span>
-              </>
+              <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center sm:gap-x-3">
+                <span className="text-royal-gold uppercase tracking-wide">
+                  Premium digital subscriptions
+                </span>
+                <span className="text-lead !mt-0 max-w-none text-base font-normal normal-case sm:text-lg">
+                  Browse {liveProducts.length} products and add to your cart. When you are signed in,
+                  your orders and status appear above.
+                </span>
+              </span>
             }
-            subtitle={`Browse ${liveProducts.length} products — your orders and status appear above when signed in.`}
           />
         </ScrollReveal>
 
@@ -146,7 +153,7 @@ export function ShopPage() {
         </ScrollReveal>
 
         {/* Sticky toolbar */}
-        <div className="sticky top-[4.25rem] z-30 -mx-4 mb-6 border-b border-white/10 bg-midnight-950/85 px-4 py-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-[4.5rem]">
+        <div className="sticky top-[4.25rem] z-30 -mx-4 mb-6 border-b border-amber-200/10 bg-[#030302]/88 px-4 py-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-[4.5rem]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative flex-1 lg:max-w-md">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -155,7 +162,7 @@ export function ShopPage() {
                 placeholder="Search streaming, AI, writing tools…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 backdrop-blur-sm transition-colors focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-brand/30"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/35 backdrop-blur-sm transition-colors focus:border-amber-200/45 focus:outline-none focus:ring-1 focus:ring-amber-200/25"
               />
             </div>
 
@@ -173,7 +180,7 @@ export function ShopPage() {
                 onChange={(e) =>
                   setSortBy(e.target.value as 'name' | 'price-asc' | 'price-desc')
                 }
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-brand/50 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-amber-200/45 focus:outline-none"
               >
                 <option value="name" className="bg-midnight-900">
                   Name A–Z
@@ -196,8 +203,8 @@ export function ShopPage() {
                 onClick={() => setCategoryFilter(cat)}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   category === cat
-                    ? 'bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-magenta text-midnight-950 shadow-neon-cyan'
-                    : 'border border-white/10 bg-white/5 text-white/60 hover:border-neon-cyan/40 hover:text-neon-cyan hover:shadow-neon-cyan'
+                    ? 'border border-amber-200/50 bg-gradient-to-r from-[#f5d78e] via-[#ffc45a] to-[#c9922e] text-[#1a1008] shadow-[0_0_20px_rgba(255,196,90,0.35)]'
+                    : 'border border-white/10 bg-white/5 text-white/60 hover:border-amber-200/40 hover:text-amber-100 hover:shadow-[0_0_16px_rgba(255,196,90,0.15)]'
                 }`}
               >
                 {cat}
@@ -220,7 +227,7 @@ export function ShopPage() {
             }}
           />
         ) : (
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4 xl:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 xl:gap-5">
             {filtered.map((product, i) => (
               <ScrollReveal key={product.id} delay={Math.min(i * 0.04, 0.24)}>
                 <div id={`shop-product-${product.id}`} className="scroll-mt-28">
@@ -249,6 +256,7 @@ export function ShopPage() {
         onOrder={handleOrder}
         onAddToCart={handleAddToCart}
         cartQuantity={selectedProduct ? getQuantity(selectedProduct.id) : 0}
+        royalTheme
       />
     </div>
   )

@@ -1,14 +1,11 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Play } from 'lucide-react'
-import { LandingRoyalBackground } from '../components/landing/LandingRoyalBackground'
-import { LandingCursorGlow } from '../components/landing/LandingCursorGlow'
-import { LandingParticles } from '../components/landing/LandingParticles'
+import { ArrowRight } from 'lucide-react'
+import { RoyalPageBackground } from '../components/ui/RoyalPageBackground'
 import { LandingNav } from '../components/landing/LandingNav'
 import { LandingStatsBar } from '../components/landing/LandingStatsBar'
 import { useLandingRipples } from '../components/landing/LandingRipple'
 import { ShopProductCarousel } from '../components/shop/ShopProductCarousel'
-import { useLandingDesktopLock } from '../hooks/useLandingDesktopLock'
 import { landingCopy } from '../constants/landingCopy'
 import { hasSeenLanding, isLandingPreview, markLandingSeen } from '../constants/landing'
 import { fadeInUp, staggerContainer } from '../utils/animations'
@@ -20,12 +17,16 @@ function leaveLanding() {
 }
 
 export function LandingPage() {
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const preview = isLandingPreview(searchParams.toString())
   const { addRipple, RippleLayer } = useLandingRipples()
-  const showLanding = !hasSeenLanding() || preview
+  const onLandingRoute = location.pathname === '/'
+  const showLanding = onLandingRoute && (!hasSeenLanding() || preview)
 
-  useLandingDesktopLock(showLanding)
+  if (!onLandingRoute) {
+    return null
+  }
 
   if (!showLanding) {
     return <Navigate to="/shop" replace />
@@ -33,28 +34,27 @@ export function LandingPage() {
 
   return (
     <section
-      className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[#030302] lg:h-full lg:min-h-0 lg:overflow-hidden"
-      onPointerDown={addRipple}
+      className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[#030302]"
     >
-      <LandingRoyalBackground />
-      <LandingCursorGlow />
-      <LandingParticles />
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
+        <RoyalPageBackground />
+      </div>
       <RippleLayer accent={ROYAL_GOLD} />
 
       <LandingNav onLeave={leaveLanding} />
 
-      <div className="relative z-10 flex min-h-dvh flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
-        <div className="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 pt-14 sm:px-6 sm:pt-[3.75rem] lg:px-10 lg:pt-[4.5rem]">
-          <div className="flex flex-1 flex-col items-center justify-center gap-5 py-4 sm:gap-6 sm:py-5 lg:gap-5 lg:py-4">
+      <div className="relative z-10 flex min-h-dvh flex-col" onPointerDown={addRipple}>
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-14 pb-6 sm:px-6 sm:pt-[3.75rem] lg:px-10 lg:pt-[4.5rem]">
+          <div className="flex flex-col items-center justify-center gap-4 py-3 sm:gap-5 sm:py-4 lg:gap-4 lg:py-3">
             <motion.div
               variants={staggerContainer}
               initial="hidden"
               animate="visible"
-              className="flex w-full max-w-3xl flex-col items-center px-1 text-center lg:max-w-none"
+              className="flex w-full flex-col items-center text-center"
             >
               <motion.h1
                 variants={fadeInUp}
-                className="font-royal max-w-full text-balance text-[clamp(1.5rem,2.8vw+0.85rem,2.75rem)] font-bold leading-[1.08] tracking-tight lg:text-[clamp(1.65rem,2.2vw+0.5rem,2.35rem)]"
+                className="font-royal w-full text-balance text-center text-[clamp(1.5rem,2.8vw+0.85rem,2.75rem)] font-bold leading-[1.08] tracking-tight lg:text-[clamp(1.65rem,2.2vw+0.5rem,2.35rem)]"
               >
                 <span className="text-royal-gold lg:whitespace-nowrap">
                   {landingCopy.headlineLine1} {landingCopy.headlineLine2}
@@ -63,7 +63,7 @@ export function LandingPage() {
 
               <motion.p
                 variants={fadeInUp}
-                className="mx-auto mt-2 max-w-[min(100%,42rem)] text-center text-sm leading-snug text-white/60 sm:mt-2.5 sm:text-base lg:mt-3 lg:max-w-[58rem] lg:text-[0.8125rem] lg:leading-[1.45] xl:text-sm"
+                className="mx-auto mt-1.5 max-w-[min(100%,42rem)] text-center text-sm leading-snug text-white/60 sm:mt-2 sm:text-base lg:mt-2 lg:max-w-[52rem] lg:text-[0.8125rem] lg:leading-snug xl:text-sm"
               >
                 {landingCopy.descriptionLine1}
                 <br />
@@ -75,8 +75,8 @@ export function LandingPage() {
               variants={fadeInUp}
               initial="hidden"
               animate="visible"
-              transition={{ delay: 0.15 }}
-              className="relative w-full min-w-0 lg:max-w-[90rem]"
+              transition={{ delay: 0.05 }}
+              className="relative mx-auto w-full min-w-0"
             >
               <ShopProductCarousel landing />
             </motion.div>
@@ -85,26 +85,17 @@ export function LandingPage() {
               variants={fadeInUp}
               initial="hidden"
               animate="visible"
-              transition={{ delay: 0.25 }}
-              className="flex w-full flex-col items-center justify-center gap-2.5 sm:flex-row sm:gap-3"
+              transition={{ delay: 0.08 }}
+              className="flex w-full justify-center pb-2"
             >
               <Link
                 to="/shop"
                 replace
                 onClick={leaveLanding}
-                className="btn-royal-gold w-full max-w-sm px-5 py-2.5 text-sm sm:w-auto sm:max-w-none lg:px-6 lg:py-2.5"
+                className="btn-royal-gold"
               >
                 {landingCopy.ctaPrimary}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/home"
-                replace
-                onClick={leaveLanding}
-                className="btn-royal-gold-outline w-full max-w-sm px-5 py-2.5 text-sm sm:w-auto sm:max-w-none lg:px-6 lg:py-2.5"
-              >
-                <Play className="h-4 w-4 fill-current" />
-                {landingCopy.ctaSecondary}
               </Link>
             </motion.div>
           </div>

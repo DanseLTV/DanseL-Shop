@@ -73,10 +73,11 @@ export function LoginPage() {
 
   useEffect(() => {
     if (authLoading) return
-    if (user && isAccountVerified(profile, user)) {
-      goAfterLogin(user.email, user.email)
-    }
-  }, [authLoading, user, profile, goAfterLogin])
+    if (!user || !isAccountVerified(profile, user)) return
+    // Only skip the form when sent here from a protected route (e.g. checkout).
+    if (!searchParams.has('redirect')) return
+    goAfterLogin(user.email, user.email)
+  }, [authLoading, user, profile, goAfterLogin, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

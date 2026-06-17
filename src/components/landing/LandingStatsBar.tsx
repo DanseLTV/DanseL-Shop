@@ -21,7 +21,7 @@ export function LandingStatsBar({ className }: { className?: string }) {
       <div className="mx-auto max-w-5xl rounded-2xl border border-amber-200/20 bg-black/50 px-4 py-3 backdrop-blur-xl sm:px-6 lg:py-2.5">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
           {stats.map(({ icon: Icon, value, label }) => (
-            <div key={label} className="flex items-center gap-2.5">
+            <div key={label} className="flex flex-col items-center justify-center gap-1.5 text-center sm:flex-row sm:gap-2.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-200/15 bg-amber-100/[0.04]">
                 <Icon className="h-3.5 w-3.5 text-amber-200/85" />
               </span>

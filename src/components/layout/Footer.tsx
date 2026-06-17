@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Mail, Send } from 'lucide-react'
 import { shopContact } from '../../data/shopContact'
 import { FireFooterEffect } from './FireFooterEffect'
+import { BrandName } from '../ui/BrandName'
 
 const footerLinks = {
   shop: [
@@ -31,18 +32,18 @@ export function Footer() {
         {/* Mobile: compact 3-column links */}
         <div className="lg:hidden">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <Link to="/shop" className="font-display text-sm font-bold tracking-wider">
-              DANSEL <span className="gradient-text">SHOP</span>
+            <Link to="/shop">
+              <BrandName className="font-display text-sm font-bold tracking-wider" />
             </Link>
             <div className="flex items-center gap-3 text-[10px] text-white/45">
-              <a href={`mailto:${shopContact.email}`} className="hover:text-brand-bright">
+              <a href={`mailto:${shopContact.email}`} className="hover:text-amber-200">
                 <Mail className="h-3.5 w-3.5" />
               </a>
               <a
                 href={shopContact.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-brand-bright"
+                className="hover:text-amber-200"
               >
                 <Send className="h-3.5 w-3.5" />
               </a>
@@ -56,7 +57,7 @@ export function Footer() {
                 <Link
                   key={link.to + link.label}
                   to={link.to}
-                  className="block py-0.5 text-white/45 hover:text-brand"
+                  className="block py-0.5 text-white/45 hover:text-amber-200/90"
                 >
                   {link.label}
                 </Link>
@@ -70,7 +71,7 @@ export function Footer() {
                 <Link
                   key={link.to + link.label}
                   to={link.to}
-                  className="block py-0.5 text-white/45 hover:text-brand"
+                  className="block py-0.5 text-white/45 hover:text-amber-200/90"
                 >
                   {link.label}
                 </Link>
@@ -82,7 +83,7 @@ export function Footer() {
                 <Link
                   key={link.to + link.label}
                   to={link.to}
-                  className="block py-0.5 text-white/45 hover:text-brand"
+                  className="block py-0.5 text-white/45 hover:text-amber-200/90"
                 >
                   {link.label}
                 </Link>
@@ -107,9 +108,7 @@ export function Footer() {
                   ;(e.currentTarget as HTMLImageElement).style.display = 'none'
                 }}
               />
-              <span className="font-display text-base font-bold tracking-wider">
-                DANSEL <span className="gradient-text">SHOP</span>
-              </span>
+              <BrandName className="font-display text-base font-bold tracking-wider" />
             </Link>
             <p className="mt-2 text-xs text-white/50">
               Premium digital accounts · Fast delivery
@@ -117,7 +116,7 @@ export function Footer() {
             <div className="mt-3 flex flex-col gap-1 text-xs text-white/55">
               <a
                 href={`mailto:${shopContact.email}`}
-                className="inline-flex items-center gap-1.5 hover:text-brand-bright"
+                className="inline-flex items-center gap-1.5 hover:text-amber-200"
               >
                 <Mail className="h-3.5 w-3.5" />
                 {shopContact.email}
@@ -126,7 +125,7 @@ export function Footer() {
                 href={shopContact.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 hover:text-brand-bright"
+                className="inline-flex items-center gap-1.5 hover:text-amber-200"
               >
                 <Send className="h-3.5 w-3.5" />
                 {shopContact.telegramUsername}
@@ -141,7 +140,7 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               {footerLinks.shop.map((link) => (
                 <li key={link.to + link.label}>
-                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-amber-200/90">
                     {link.label}
                   </Link>
                 </li>
@@ -149,7 +148,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/shop?category=Writing Tools"
-                  className="text-xs text-white/50 hover:text-brand"
+                  className="text-xs text-white/50 hover:text-amber-200/90"
                 >
                   Writing Tools
                 </Link>
@@ -164,13 +163,13 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               {footerLinks.support.map((link) => (
                 <li key={link.to + link.label}>
-                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-amber-200/90">
                     {link.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link to="/home#reviews" className="text-xs text-white/50 hover:text-brand">
+                <Link to="/home#reviews" className="text-xs text-white/50 hover:text-amber-200/90">
                   Reviews
                 </Link>
               </li>
@@ -184,7 +183,7 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               {footerLinks.legal.map((link) => (
                 <li key={link.to + link.label}>
-                  <Link to={link.to} className="text-xs text-white/50 hover:text-brand">
+                  <Link to={link.to} className="text-xs text-white/50 hover:text-amber-200/90">
                     {link.label}
                   </Link>
                 </li>
@@ -192,7 +191,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/policies#refund"
-                  className="text-xs text-white/50 hover:text-brand"
+                  className="text-xs text-white/50 hover:text-amber-200/90"
                 >
                   Refund
                 </Link>
