@@ -21,7 +21,6 @@ import { validateProofFile } from '../utils/orderProof'
 import { submitCartOrder, submitOrder } from '../utils/orderSubmit'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { GradientButton } from '../components/ui/GradientButton'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 import { CheckoutSteps } from '../components/order/CheckoutSteps'
 import { PaymentInstructions } from '../components/order/PaymentInstructions'
@@ -198,8 +197,6 @@ export function OrderPage() {
 
   return (
     <div className="relative min-h-screen pt-20">
-      <AnimatedBackground />
-
       <div className="relative mx-auto max-w-2xl px-4 pb-20 sm:px-6 lg:px-8">
         <CustomerPageHeader
           backTo={cartMode ? '/cart' : '/shop'}

@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles } from 'lucide-react'
-import { AnimatedBackground } from '../ui/AnimatedBackground'
 import { GradientButton } from '../ui/GradientButton'
 import { BackNavLink } from '../ui/BackNavLink'
 import { fadeInUp, staggerContainer } from '../../utils/animations'
@@ -16,8 +15,6 @@ const anchorLinks = [
 export function Hero() {
   return (
     <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20">
-      <AnimatedBackground />
-
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <BackNavLink to="/shop" label="Back to home" className="mb-6" />
         <motion.div
@@ -28,7 +25,7 @@ export function Hero() {
         >
           <motion.div
             variants={fadeInUp}
-            className="text-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-4 py-2 !tracking-[0.16em]"
+            className="text-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-amber-400/10 px-4 py-2 !tracking-[0.16em]"
           >
             <Sparkles className="h-4 w-4" />
             About DANSEL SHOP
@@ -39,7 +36,7 @@ export function Hero() {
             className="text-display-md"
           >
             Trusted premium access,{' '}
-            <span className="gradient-text">explained clearly</span>
+            <span className="text-royal-gold">explained clearly</span>
           </motion.h1>
 
           <motion.p
@@ -69,7 +66,7 @@ export function Hero() {
               <Link
                 key={item.hash}
                 to={`/home${item.hash}`}
-                className="text-caption rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-medium transition-colors hover:border-brand/40 hover:text-white"
+                className="text-caption rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 font-medium transition-colors hover:border-amber-200/40 hover:text-amber-100"
               >
                 {item.label}
               </Link>

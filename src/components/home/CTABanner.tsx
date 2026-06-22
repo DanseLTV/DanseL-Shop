@@ -11,11 +11,11 @@ export function CTABanner() {
         <ScrollReveal>
           <motion.div
             whileHover={{ scale: 1.01 }}
-            className="relative overflow-hidden rounded-3xl border border-brand/20 p-8 sm:p-12 lg:p-16"
+            className="relative overflow-hidden rounded-3xl border border-amber-200/20 p-8 sm:p-12 lg:p-16"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-brand-dim/10 to-brand-bright/10" />
-            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-brand/20 blur-[80px]" />
-            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-brand-bright/15 blur-[80px]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400/15 via-amber-500/5 to-amber-200/10" />
+            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-amber-400/15 blur-[80px]" />
+            <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-amber-300/10 blur-[80px]" />
 
             <div className="relative text-center">
               <h2 className="font-display text-3xl font-bold text-white sm:text-4xl lg:text-5xl">

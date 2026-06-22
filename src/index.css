@@ -537,6 +537,106 @@
     background-color: rgba(255, 196, 90, 0.18);
   }
 
+  .royal-theme .border-brand {
+    border-color: rgba(255, 196, 90, 0.45);
+  }
+
+  .royal-theme .border-brand\/10 {
+    border-color: rgba(255, 196, 90, 0.15);
+  }
+
+  .royal-theme .border-brand\/20 {
+    border-color: rgba(255, 196, 90, 0.22);
+  }
+
+  .royal-theme .border-brand\/30 {
+    border-color: rgba(255, 196, 90, 0.3);
+  }
+
+  .royal-theme .border-brand\/40 {
+    border-color: rgba(255, 196, 90, 0.38);
+  }
+
+  .royal-theme .border-brand\/50 {
+    border-color: rgba(255, 196, 90, 0.48);
+  }
+
+  .royal-theme .bg-brand\/5 {
+    background-color: rgba(255, 196, 90, 0.05);
+  }
+
+  .royal-theme .bg-brand\/10 {
+    background-color: rgba(255, 196, 90, 0.1);
+  }
+
+  .royal-theme .bg-brand\/15 {
+    background-color: rgba(255, 196, 90, 0.15);
+  }
+
+  .royal-theme .bg-brand-bright\/20 {
+    background-color: rgba(255, 216, 120, 0.2);
+  }
+
+  .royal-theme .hover\:border-brand\/30:hover {
+    border-color: rgba(255, 196, 90, 0.35);
+  }
+
+  .royal-theme .hover\:border-brand\/40:hover {
+    border-color: rgba(255, 196, 90, 0.42);
+  }
+
+  .royal-theme .hover\:border-brand\/50:hover {
+    border-color: rgba(255, 196, 90, 0.5);
+  }
+
+  .royal-theme .focus\:border-brand\/50:focus {
+    border-color: rgba(255, 196, 90, 0.5);
+  }
+
+  .royal-theme .focus\:ring-brand\/30:focus {
+    --tw-ring-color: rgba(255, 196, 90, 0.3);
+  }
+
+  .royal-theme .focus\:border-brand\/40:focus {
+    border-color: rgba(255, 196, 90, 0.42);
+  }
+
+  .royal-theme .focus\:ring-brand\/25:focus {
+    --tw-ring-color: rgba(255, 196, 90, 0.25);
+  }
+
+  .royal-theme .bg-brand {
+    background-color: #ffc45a;
+  }
+
+}
+
+/* Royal gold footer accent line */
+.royal-footer-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #9a7020,
+    #ffc45a,
+    #fff8e7,
+    #ffc45a,
+    #9a7020,
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: royal-footer-shimmer 4s linear infinite;
+  box-shadow:
+    0 0 14px rgba(255, 196, 90, 0.45),
+    0 0 28px rgba(255, 196, 90, 0.15);
+}
+
+@keyframes royal-footer-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Premium monochrome footer shimmer — platinum/silver glow */

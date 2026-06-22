@@ -60,7 +60,7 @@ export function activeMessagesOnly(messages: OrderMessage[]) {
 }
 
 export interface OrderWithCustomer extends OrderRecord {
-  profiles?: { username: string } | null
+  profiles?: { username: string; email?: string; phone?: string } | null
 }
 
 export type NotificationType = 'order_status' | 'new_order' | 'new_message'

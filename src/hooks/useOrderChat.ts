@@ -11,6 +11,7 @@ import {
   notifyRecipientNewMessage,
 } from '../utils/notifications'
 import { customerOrderLink } from '../constants/orderNotifications'
+import { shopContact } from '../data/shopContact'
 
 export function useOrderChat(
   orderId: string | null,
@@ -207,7 +208,7 @@ export function useOrderChat(
           await notifyRecipientNewMessage({
             orderId,
             recipientUserId: orderRow.user_id,
-            senderLabel: 'DANSEL SHOP',
+            senderLabel: shopContact.chatSenderShort,
             messageBody: trimmed,
             linkPath: customerOrderLink(orderId),
           })

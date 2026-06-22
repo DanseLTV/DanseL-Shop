@@ -3,15 +3,12 @@ import { faqItems } from '../data/faq'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { FAQAccordion } from '../components/faq/FAQAccordion'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 
 export function PoliciesPage() {
   return (
-    <div className="relative min-h-screen pt-20">
-      <AnimatedBackground />
-
-      <div className="relative mx-auto max-w-4xl px-4 pb-20 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen pt-20 pb-20">
+      <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <CustomerPageHeader
           backTo="/shop"
           backLabel="Back to home"
@@ -53,7 +50,7 @@ export function PoliciesPage() {
                       key={j}
                       className="flex gap-3 text-sm leading-relaxed text-white/60"
                     >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300/80" />
                       {paragraph}
                     </li>
                   ))}

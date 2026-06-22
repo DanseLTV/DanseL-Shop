@@ -13,6 +13,7 @@ import {
 import { useOrderChat } from '../../hooks/useOrderChat'
 import { useAuth } from '../../context/AuthContext'
 import { isMessageDeleted, type OrderMessage, type UserRole } from '../../lib/supabase'
+import { shopContact } from '../../data/shopContact'
 import { GradientButton } from '../ui/GradientButton'
 
 interface OrderChatProps {
@@ -27,6 +28,22 @@ interface OrderChatProps {
 
 function formatCustomerHandle(username?: string | null) {
   return username ? `@${username}` : '@customer'
+}
+
+function messageSenderLabel(
+  msg: OrderMessage,
+  viewerRole: UserRole,
+  isAdminViewer: boolean,
+  customerHandle: string
+) {
+  if (msg.sender_role === 'admin') {
+    if (isAdminViewer && msg.sender_role === viewerRole) {
+      return `You · ${shopContact.chatSenderShort}`
+    }
+    return shopContact.chatSenderLabel
+  }
+  if (isAdminViewer) return customerHandle
+  return `You · ${customerHandle}`
 }
 
 function isEdited(msg: OrderMessage) {
@@ -148,10 +165,10 @@ export function OrderChat({
 
   return (
     <div
-      className={`flex h-full min-h-[280px] max-h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] sm:min-h-[320px] ${className}`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] ${className}`}
     >
-      <div className="relative flex shrink-0 items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
-        <MessageCircle className="h-5 w-5 text-brand-bright" />
+      <div className="relative flex shrink-0 items-center gap-2 border-b border-white/10 px-3 py-2.5">
+        <MessageCircle className="h-4 w-4 text-brand-bright" />
         <h3 className="font-display text-sm font-semibold tracking-tight text-white">{title}</h3>
         <span className="text-caption ml-auto font-normal">
           {isAdmin ? 'Customer inbox' : 'Live · in-site chat'}
@@ -239,7 +256,7 @@ export function OrderChat({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 scroll-y px-4 py-4">
+      <div className="min-h-0 flex-1 scroll-y px-3 py-3">
         {loading ? (
           <p className="text-subtle m-auto text-center">Loading messages…</p>
         ) : messages.length === 0 && deletedCount > 0 && isAdmin ? (
@@ -252,7 +269,7 @@ export function OrderChat({
             No messages yet. Say hello or ask about your order — we&apos;ll reply here.
           </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {messages.map((msg) => {
               const isOwnMessage = msg.sender_role === viewerRole
               const deleted = isMessageDeleted(msg)
@@ -265,13 +282,13 @@ export function OrderChat({
                   className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`group relative max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    className={`group relative max-w-[64%] rounded-xl px-3 py-2 text-[13px] leading-snug ${
                       deleted
                         ? 'border border-dashed border-white/15 bg-white/[0.03] text-white/55'
                         : isOwnMessage
                           ? 'rounded-br-md bg-[#0084FF] text-white shadow-sm'
                           : 'rounded-bl-md bg-[#0A1628] text-white shadow-sm ring-1 ring-[#1e3a5f]/80'
-                    } ${showAdminActions ? 'pr-9' : ''}`}
+                    } ${showAdminActions ? 'pr-8' : ''}`}
                   >
                     {showAdminActions && !editing && (
                       <div className="absolute right-1 top-1">
@@ -325,7 +342,11 @@ export function OrderChat({
                     )}
 
                     <p
-                      className={`mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                      className={`mb-1 text-[9px] font-bold ${
+                        msg.sender_role === 'admin' && !isOwnMessage
+                          ? 'normal-case tracking-normal text-amber-200/95'
+                          : 'uppercase tracking-[0.1em]'
+                      } ${
                         deleted
                           ? 'text-white/35'
                           : isOwnMessage
@@ -333,13 +354,7 @@ export function OrderChat({
                             : 'text-sky-300/90'
                       }`}
                     >
-                      {msg.sender_role === 'admin'
-                        ? isAdmin && isOwnMessage
-                          ? 'You · DANSEL SHOP'
-                          : 'DANSEL SHOP'
-                        : isAdmin
-                          ? customerHandle
-                          : `You · ${customerHandle}`}
+                      {messageSenderLabel(msg, viewerRole, isAdmin, customerHandle)}
                       {deleted && msg.deleted_at && (
                         <span className="ml-2 normal-case font-semibold tracking-normal text-red-300/90">
                           · Deleted{' '}
@@ -392,7 +407,7 @@ export function OrderChat({
                           {msg.body}
                         </p>
                         <p
-                          className={`mt-1.5 text-[10px] font-medium ${
+                          className={`mt-1 text-[9px] font-medium ${
                             deleted
                               ? 'text-white/30'
                               : isOwnMessage
@@ -446,17 +461,17 @@ export function OrderChat({
 
       {error && <p className="shrink-0 px-4 pb-2 text-xs font-medium text-red-300">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="flex shrink-0 gap-2 border-t border-white/10 p-3">
+      <form onSubmit={handleSubmit} className="flex shrink-0 gap-2 border-t border-white/10 p-2.5">
         <input
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={
-            isAdmin ? 'Reply to customer…' : 'Message admin about your order…'
+            isAdmin ? 'Reply to customer…' : `Message ${shopContact.chatSenderShort} about your order…`
           }
           maxLength={4000}
           disabled={moderating}
-          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/35 focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/25 disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-white placeholder:text-white/35 focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/25 disabled:opacity-50"
         />
         <GradientButton type="submit" size="sm" disabled={sending || moderating || !draft.trim()}>
           <Send className="h-4 w-4" />

@@ -15,7 +15,7 @@ export function OrderGuide() {
         aria-expanded={open}
       >
         <span className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight text-white">
-          <ListOrdered className="h-4 w-4 text-brand-bright" />
+          <ListOrdered className="h-4 w-4 text-amber-200" />
           How to order — quick guide
         </span>
         <ChevronDown
@@ -38,7 +38,7 @@ export function OrderGuide() {
                   key={step.step}
                   className="rounded-xl border border-white/10 bg-white/5 p-4"
                 >
-                  <span className="font-display text-xl font-bold gradient-text">
+                  <span className="font-display text-xl font-bold text-royal-gold">
                     {step.step}
                   </span>
                   <p className="mt-2 text-sm font-semibold tracking-tight text-white">{step.title}</p>

@@ -5,12 +5,11 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase, type OrderRecord, type OrderWithCustomer } from '../../lib/supabase'
 import { formatPrice } from '../../data/products'
 import { OrderChat } from '../../components/messages/OrderChat'
+import { AdminOrderDetailsPanel } from '../../components/admin/AdminOrderDetailsPanel'
 import { OrderStatusBadge } from '../../components/order/OrderStatusBadge'
 import { orderStatusMeta } from '../../data/orderStatus'
 import { getOrderStatusChatMessage } from '../../constants/orderNotifications'
 import { notifyCustomerOrderStatus } from '../../utils/notifications'
-import { OrderProgress } from '../../components/order/OrderProgress'
-import { PaymentProofViewer } from '../../components/order/PaymentProofViewer'
 import type { OrderStatus } from '../../data/orderStatus'
 
 type StatusFilter = 'all' | 'unread' | OrderStatus
@@ -49,6 +48,14 @@ function parseStatusFilter(value: string | null): StatusFilter {
   return 'all'
 }
 
+function defaultAdminOrderDetailsOpen(status?: OrderStatus) {
+  if (typeof window === 'undefined') return true
+  const mobile = !window.matchMedia('(min-width: 1024px)').matches
+  if (mobile) return true
+  if (status === 'pending' || status === 'paid') return true
+  return false
+}
+
 export function AdminOrdersPage() {
   const { user } = useAuth()
   const [searchParams] = useSearchParams()
@@ -68,6 +75,7 @@ export function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(true)
   const initialSelectDone = useRef(false)
 
   const indexMessages = useCallback((msgs: { order_id: string; body: string; created_at: string; sender_role: string; deleted_at?: string | null }[]) => {
@@ -107,7 +115,7 @@ export function AdminOrdersPage() {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*, profiles(username)')
+        .select('*, profiles(username, email, phone)')
         .order('created_at', { ascending: false })
         .limit(100)
 
@@ -270,6 +278,10 @@ export function AdminOrdersPage() {
   const unreadCount = orders.filter((o) => customerHasUnread(o, lastCustomerMessageAt[o.id])).length
   const readyToDeliverCount = orders.filter((o) => o.status === 'paid').length
 
+  useEffect(() => {
+    setOrderDetailsOpen(defaultAdminOrderDetailsOpen(selected?.status))
+  }, [selectedOrderId, selected?.status])
+
   const filterTabs: { key: StatusFilter; label: string; count?: number }[] = [
     { key: 'all', label: 'All' },
     { key: 'unread', label: 'Needs reply', count: unreadCount },
@@ -394,78 +406,24 @@ export function AdminOrdersPage() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
             {selected ? (
               <>
-                <div className="shrink-0 border-b border-white/10 bg-white/[0.02] p-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-white">{selected.product_name}</p>
-                      <p className="text-xs text-white/50">
-                        @{selected.profiles?.username ?? 'customer'} · Order #{selected.id.slice(0, 8)} ·{' '}
-                        {formatPrice(Number(selected.amount))}
-                      </p>
-                    </div>
-                    <OrderStatusBadge status={selected.status} size="md" />
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-start gap-3">
-                    <OrderProgress status={selected.status} compact />
-                    <PaymentProofViewer
-                      proofUrl={selected.proof_url}
-                      label="Payment proof"
-                      className="max-w-[11rem]"
-                    />
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selected.status === 'pending' && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={updatingId === selected.id}
-                          onClick={() => updateOrderStatus(selected.id, 'paid')}
-                          className="btn-neon-success disabled:opacity-50"
-                        >
-                          Payment confirmed
-                        </button>
-                        <button
-                          type="button"
-                          disabled={updatingId === selected.id}
-                          onClick={() => updateOrderStatus(selected.id, 'cancelled')}
-                          className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs text-red-300"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )}
-                    {selected.status === 'paid' && (
-                      <div className="w-full rounded-xl border border-sky-500/25 bg-sky-500/10 p-4">
-                        <p className="text-sm font-semibold text-sky-100">Payment confirmed</p>
-                        <p className="text-caption mt-1 text-sky-100/75">
-                          Naibigay mo na ang product sa chat? I-click below para maging{' '}
-                          <strong className="font-semibold text-white">Delivered</strong> ang order sa
-                          customer.
-                        </p>
-                        <button
-                          type="button"
-                          disabled={updatingId === selected.id}
-                          onClick={() => updateOrderStatus(selected.id, 'delivered')}
-                          className="btn-glow mt-3 px-4 py-2.5 text-sm disabled:opacity-50"
-                        >
-                          {updatingId === selected.id ? 'Updating…' : 'Mark as delivered'}
-                        </button>
-                      </div>
-                    )}
-                    {selected.status === 'delivered' && (
-                      <p className="text-caption rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-emerald-200/90">
-                        Order complete — customer sees this as delivered.
-                      </p>
-                    )}
-                  </div>
-                  {actionError && <p className="mt-2 text-xs text-red-300">{actionError}</p>}
-                  {actionSuccess && <p className="mt-2 text-xs text-emerald-300">{actionSuccess}</p>}
-                </div>
+                <AdminOrderDetailsPanel
+                  order={selected}
+                  open={orderDetailsOpen}
+                  onToggle={() => setOrderDetailsOpen((v) => !v)}
+                  messageCount={messageCounts[selected.id] ?? 0}
+                  unread={customerHasUnread(selected, lastCustomerMessageAt[selected.id])}
+                  updating={updatingId === selected.id}
+                  actionError={actionError}
+                  actionSuccess={actionSuccess}
+                  onConfirmPayment={() => void updateOrderStatus(selected.id, 'paid')}
+                  onCancelOrder={() => void updateOrderStatus(selected.id, 'cancelled')}
+                  onMarkDelivered={() => void updateOrderStatus(selected.id, 'delivered')}
+                />
 
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3 pt-0">
+                <div className="flex min-h-0 flex-col overflow-hidden p-3 pt-2">
                   <OrderChat
                     key={selected.id}
                     orderId={selected.id}

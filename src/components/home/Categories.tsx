@@ -28,14 +28,14 @@ export function Categories() {
               <Link to={`/shop?category=${encodeURIComponent(cat.name)}`}>
                 <GlassCard hover className="group h-full p-6 text-center">
                   <span className="text-4xl">{cat.icon}</span>
-                  <h3 className="mt-4 font-display text-lg font-semibold text-white group-hover:text-brand transition-colors">
+                  <h3 className="mt-4 font-display text-lg font-semibold text-white transition-colors group-hover:text-amber-200">
                     {cat.name}
                   </h3>
                   <p className="mt-2 text-sm text-white/50">{cat.description}</p>
-                  <p className="mt-3 text-xs font-medium text-brand">
+                  <p className="mt-3 text-xs font-medium text-amber-200/90">
                     {cat.count} products
                   </p>
-                  <ArrowRight className="mx-auto mt-4 h-4 w-4 text-white/30 transition-all group-hover:translate-x-1 group-hover:text-brand" />
+                  <ArrowRight className="mx-auto mt-4 h-4 w-4 text-white/30 transition-all group-hover:translate-x-1 group-hover:text-amber-200" />
                 </GlassCard>
               </Link>
             </ScrollReveal>

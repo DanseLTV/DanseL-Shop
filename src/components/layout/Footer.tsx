@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Mail, Send } from 'lucide-react'
 import { shopContact } from '../../data/shopContact'
-import { FireFooterEffect } from './FireFooterEffect'
 import { BrandName } from '../ui/BrandName'
 
 const footerLinks = {
@@ -23,12 +22,21 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="relative z-10 mt-auto border-t border-white/10 bg-midnight-950">
-      <div className="relative h-24 overflow-hidden sm:h-28">
-        <FireFooterEffect />
+    <footer className="relative z-10 mt-auto border-t border-amber-200/15 bg-[#030302]/95 backdrop-blur-sm">
+      <div className="relative h-14 overflow-hidden sm:h-16" aria-hidden>
+        <div className="absolute inset-0 bg-gradient-to-t from-amber-500/[0.14] via-amber-400/[0.05] to-transparent" />
+        <div
+          className="absolute bottom-0 left-1/2 h-20 w-[min(100%,36rem)] -translate-x-1/2 opacity-80"
+          style={{
+            background:
+              'radial-gradient(ellipse 100% 100% at 50% 100%, rgba(255, 196, 90, 0.22) 0%, transparent 72%)',
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200/55 to-transparent" />
+        <div className="royal-footer-shimmer absolute bottom-0 left-0 right-0 h-[2px]" />
       </div>
 
-      <div className="relative border-t border-white/5 px-4 pb-20 pt-4 sm:px-6 lg:px-8 lg:pb-6 lg:pt-5">
+      <div className="relative border-t border-amber-200/10 px-4 pb-20 pt-4 sm:px-6 lg:px-8 lg:pb-6 lg:pt-5">
         {/* Mobile: compact 3-column links */}
         <div className="lg:hidden">
           <div className="mb-3 flex items-center justify-between gap-2">

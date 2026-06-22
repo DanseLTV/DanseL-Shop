@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
+import { Info, ShoppingCart, Sparkles } from 'lucide-react'
 import type { Product } from '../../types'
 import { formatPrice } from '../../data/products'
 import { ProductImage } from './ProductImage'
@@ -86,16 +86,17 @@ export function ProductCard({
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-1.5 border-t border-white/5 pt-1.5 sm:gap-2 sm:pt-2">
-          <p className="shrink-0 font-display text-sm font-bold tabular-nums text-white sm:text-base">
+        <div className="flex flex-col gap-2 border-t border-white/5 pt-2 sm:pt-2.5">
+          <p className="font-display text-base font-bold tabular-nums text-white sm:text-lg">
             {formatPrice(product.price)}
           </p>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-1">
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={() => onViewDetails(product)}
-              className="btn-neon-ghost shrink-0 px-2 py-1.5 text-[10px] sm:px-2.5 sm:py-1.5 sm:text-xs"
+              className="btn-neon-ghost inline-flex min-w-0 items-center justify-center gap-1 px-2 py-2 text-[10px] leading-tight sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-xs"
             >
+              <Info className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
               Details
             </button>
             {onAddToCart && (
@@ -103,16 +104,21 @@ export function ProductCard({
                 type="button"
                 onClick={() => onAddToCart(product)}
                 disabled={!isAvailable}
-                className="btn-neon-accent shrink-0 px-2 py-1.5 text-[10px] disabled:cursor-not-allowed sm:px-2.5 sm:py-1.5 sm:text-xs"
+                className="btn-neon-accent inline-flex min-w-0 items-center justify-center gap-1 px-1.5 py-2 text-[9px] leading-tight disabled:cursor-not-allowed sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-xs"
               >
-                {cartQuantity > 0 ? `(${cartQuantity})` : 'Cart'}
+                <ShoppingCart className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
+                <span className="truncate">
+                  {cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart'}
+                </span>
               </button>
             )}
             <button
               type="button"
               onClick={() => onOrder(product)}
               disabled={!isAvailable}
-              className="btn-glow shrink-0 px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-1.5 sm:text-xs"
+              className={`btn-glow inline-flex min-w-0 items-center justify-center px-2 py-2 text-[10px] leading-tight disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2 sm:text-xs ${
+                onAddToCart ? 'col-span-2' : ''
+              }`}
             >
               Buy
             </button>

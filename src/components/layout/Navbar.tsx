@@ -21,6 +21,11 @@ function isLinkActive(pathname: string, link: (typeof navLinks)[number]) {
   return pathname.startsWith(link.to)
 }
 
+/** Cart nav only on shop browsing / checkout — not auth or info pages. */
+function showShopCartNav(pathname: string) {
+  return pathname === '/shop' || pathname === '/cart' || pathname === '/order'
+}
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -48,6 +53,7 @@ export function Navbar() {
   const onLoginPage = location.pathname === '/login'
   const onSignupPage = location.pathname === '/signup'
   const onForgotPasswordPage = location.pathname === '/forgot-password'
+  const showCartNav = showShopCartNav(location.pathname)
 
   return (
     <motion.header
@@ -97,14 +103,16 @@ export function Navbar() {
               Landing
             </Link>
           )}
-          <CartNavLink
-            className={`rounded-lg px-3 py-2 text-sm font-medium tracking-tight transition-colors ${
-              location.pathname === '/cart'
-                ? 'text-amber-200'
-                : 'text-ink-muted hover:bg-white/5 hover:text-white'
-            }`}
-            showLabel
-          />
+          {showCartNav && (
+            <CartNavLink
+              className={`rounded-lg px-3 py-2 text-sm font-medium tracking-tight transition-colors ${
+                location.pathname === '/cart'
+                  ? 'text-amber-200'
+                  : 'text-ink-muted hover:bg-white/5 hover:text-white'
+              }`}
+              showLabel
+            />
+          )}
           {loading ? (
             <div className="h-9 w-28 animate-pulse rounded-lg bg-white/10" />
           ) : user ? (
@@ -148,7 +156,7 @@ export function Navbar() {
               {!onLoginPage && !onForgotPasswordPage && (
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                  className="btn-royal-gold inline-flex items-center justify-center gap-2 px-4 py-2 text-sm"
                 >
                   <LogIn className="h-4 w-4" />
                   Sign In
@@ -200,16 +208,18 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="my-2 border-t border-white/10" />
-              <Link
-                to="/cart"
-                className={`rounded-lg px-4 py-3 text-sm font-medium ${
-                  location.pathname === '/cart'
-                    ? 'bg-amber-400/10 text-amber-100'
-                    : 'text-white/80 hover:bg-white/5'
-                }`}
-              >
-                Cart
-              </Link>
+              {showCartNav && (
+                <Link
+                  to="/cart"
+                  className={`rounded-lg px-4 py-3 text-sm font-medium ${
+                    location.pathname === '/cart'
+                      ? 'bg-amber-400/10 text-amber-100'
+                      : 'text-white/80 hover:bg-white/5'
+                  }`}
+                >
+                  Cart
+                </Link>
+              )}
               {isAdmin && location.pathname !== '/' && (
                 <Link
                   to={LANDING_PREVIEW_PATH}
@@ -252,7 +262,7 @@ export function Navbar() {
                   {!onLoginPage && !onForgotPasswordPage && (
                     <Link
                       to="/login"
-                      className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white"
+                      className="btn-royal-gold flex items-center justify-center gap-2 px-4 py-3 text-sm"
                     >
                       <LogIn className="h-4 w-4" />
                       Sign In

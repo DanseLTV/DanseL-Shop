@@ -28,10 +28,14 @@ export const orderStatusMeta: Record<
   },
 }
 
-export const orderPipelineSteps: { status: OrderStatus; title: string }[] = [
-  { status: 'pending', title: 'Order placed' },
-  { status: 'paid', title: 'Payment confirmed' },
-  { status: 'delivered', title: 'Delivered' },
+export const orderPipelineSteps: {
+  status: OrderStatus
+  title: string
+  shortTitle: string
+}[] = [
+  { status: 'pending', title: 'Order placed', shortTitle: 'Placed' },
+  { status: 'paid', title: 'Payment confirmed', shortTitle: 'Confirmed' },
+  { status: 'delivered', title: 'Delivered', shortTitle: 'Delivered' },
 ]
 
 export function statusIndex(status: OrderStatus): number {

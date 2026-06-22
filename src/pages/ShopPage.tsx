@@ -4,8 +4,8 @@ import { Search, SlidersHorizontal, Package, ShoppingBag } from 'lucide-react'
 import type { Product } from '../types'
 import { useOrderNavigation } from '../hooks/useOrderNavigation'
 import { useCart } from '../context/CartContext'
+import { useGuardedAddToCart } from '../hooks/useGuardedAddToCart'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
-import { RoyalPageBackground } from '../components/ui/RoyalPageBackground'
 import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 import { ProductCard } from '../components/shop/ProductCard'
 import { ProductDetailModal } from '../components/shop/ProductDetailModal'
@@ -19,7 +19,8 @@ import { ToastBanner } from '../components/ui/ToastBanner'
 
 export function ShopPage() {
   const { products: liveProducts, loading: productsLoading } = useProducts()
-  const { addItem, getQuantity } = useCart()
+  const { getQuantity } = useCart()
+  const addToCart = useGuardedAddToCart()
   const [searchParams, setSearchParams] = useSearchParams()
   const goToOrder = useOrderNavigation()
   const [cartToast, setCartToast] = useState<string | null>(null)
@@ -100,20 +101,16 @@ export function ShopPage() {
 
   const handleAddToCart = useCallback(
     (product: Product) => {
-      if (product.availability === 'Out of Stock') return
-      addItem(product.id)
-      setCartToast(`${product.name} added to cart`)
-      setSelectedProduct(null)
+      if (addToCart(product)) {
+        setCartToast(`${product.name} added to cart`)
+        setSelectedProduct(null)
+      }
     },
-    [addItem]
+    [addToCart]
   )
 
   return (
-    <div className="royal-theme relative min-h-screen bg-[#030302] pt-20 pb-24 lg:pb-20">
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
-        <RoyalPageBackground />
-      </div>
-
+    <div className="relative min-h-screen pt-20 pb-24 lg:pb-20">
       {cartToast && (
         <ToastBanner
           message={cartToast}

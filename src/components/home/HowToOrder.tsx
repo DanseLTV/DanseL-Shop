@@ -20,10 +20,10 @@ export function HowToOrder() {
             <ScrollReveal key={step.step} delay={i * 0.1}>
               <div className="relative">
                 {i < orderSteps.length - 1 && (
-                  <div className="absolute left-1/2 top-8 hidden h-0.5 w-full bg-gradient-to-r from-brand/50 to-transparent lg:block" />
+                  <div className="absolute left-1/2 top-8 hidden h-0.5 w-full bg-gradient-to-r from-amber-300/40 to-transparent lg:block" />
                 )}
                 <div className="glass-card relative h-full p-6 text-center">
-                  <span className="inline-block font-display text-3xl font-bold gradient-text">
+                  <span className="inline-block font-display text-3xl font-bold text-royal-gold">
                     {step.step}
                   </span>
                   <h3 className="mt-4 font-display text-lg font-semibold text-white">

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { MessageCircle, Plus, ShoppingBag } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronDown, MessageCircle, Plus, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, type OrderRecord } from '../lib/supabase'
 import { formatPrice } from '../data/products'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
+import { shopContact } from '../data/shopContact'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { GlassCard } from '../components/ui/GlassCard'
@@ -24,6 +25,11 @@ function hasUnreadForCustomer(order: OrderRecord, lastMessageAt?: string) {
   return new Date(lastMessageAt) > new Date(readAt)
 }
 
+function defaultOrderDetailsOpen() {
+  if (typeof window === 'undefined') return true
+  return !window.matchMedia('(min-width: 1024px)').matches
+}
+
 export function MyOrdersPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, profile } = useAuth()
@@ -32,6 +38,7 @@ export function MyOrdersPage() {
   const [lastAdminMessageAt, setLastAdminMessageAt] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(defaultOrderDetailsOpen)
 
   const orderFromUrl = searchParams.get('order')
   const selectedId =
@@ -159,13 +166,16 @@ export function MyOrdersPage() {
     setSearchParams({ order: id }, { replace: true })
   }
 
+  useEffect(() => {
+    setOrderDetailsOpen(defaultOrderDetailsOpen())
+  }, [selectedId])
+
   const selected = orders.find((o) => o.id === selectedId)
 
   return (
-    <div className="relative min-h-screen pt-24">
-      <AnimatedBackground />
-      <div className="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="relative flex min-h-[calc(100dvh-5.25rem)] flex-col pt-20 lg:pt-[5.25rem]">
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-16 sm:px-6 lg:px-8 lg:min-h-0 lg:pb-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <BackNavLink to="/account" label="Back to account" />
           <GradientButton onClick={() => goToOrder()} size="sm">
             <Plus className="h-4 w-4" />
@@ -177,8 +187,9 @@ export function MyOrdersPage() {
           <SectionHeading
             badge="Orders"
             title="My Orders & Messages"
-            subtitle="Track payment verification, chat with admin, and receive your product — all in one place."
+            subtitle="Track payment verification, chat with admin, and receive your product."
             align="left"
+            compact
           />
         </ScrollReveal>
 
@@ -201,8 +212,8 @@ export function MyOrdersPage() {
             actionTo="/shop"
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
-            <div className="space-y-2 lg:max-h-[calc(100vh-12rem)] lg:scroll-y lg:pr-1">
+          <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-stretch">
+            <div className="space-y-2 lg:min-h-0 lg:scroll-y lg:pr-1">
               <p className="text-eyebrow mb-2 !text-[10px]">
                 Your orders ({orders.length})
               </p>
@@ -246,30 +257,62 @@ export function MyOrdersPage() {
             </div>
 
             {selectedId && (
-              <div className="flex min-h-0 min-w-0 flex-col gap-4 lg:max-h-[calc(100vh-8rem)]">
+              <div className="grid min-h-[420px] grid-rows-[auto_minmax(0,1fr)_auto] gap-2 lg:min-h-0 lg:h-full lg:min-w-0">
                 {selected ? (
-                  <GlassCard className="shrink-0 p-4 sm:p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-display text-lg font-semibold tracking-tight text-white">
+                  <GlassCard className="shrink-0 overflow-hidden p-0">
+                    <button
+                      type="button"
+                      onClick={() => setOrderDetailsOpen((v) => !v)}
+                      className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-white/[0.02] sm:p-4"
+                      aria-expanded={orderDetailsOpen}
+                      aria-controls="order-details-panel"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-display text-base font-semibold tracking-tight text-white sm:text-lg">
                           {selected.product_name}
                         </p>
-                        <p className="text-caption">
+                        <p className="text-caption !text-[11px]">
                           Order #{selected.id.slice(0, 8)} · {selected.payment_method} ·{' '}
                           {formatPrice(Number(selected.amount))}
                         </p>
+                        {!orderDetailsOpen && (
+                          <p className="mt-1 text-[10px] text-amber-200/55 lg:inline">
+                            <span className="hidden lg:inline">Click to view progress & payment proof</span>
+                            <span className="lg:hidden">Tap to view progress & payment proof</span>
+                          </p>
+                        )}
                       </div>
                       <OrderStatusBadge status={selected.status} size="md" />
-                    </div>
-                    <div className="mt-4 border-t border-white/10 pt-4">
-                      <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[1fr_auto] sm:gap-4">
-                        <OrderProgress status={selected.status} />
-                        <PaymentProofViewer
-                          proofUrl={selected.proof_url}
-                          className="w-full max-w-full sm:max-w-[13rem] sm:justify-self-end"
-                        />
-                      </div>
-                    </div>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-white/45 transition-transform duration-200 ${
+                          orderDetailsOpen ? 'rotate-180' : ''
+                        }`}
+                        aria-hidden
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {orderDetailsOpen && (
+                        <motion.div
+                          id="order-details-panel"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t border-white/10 px-3 pb-3 pt-3 sm:px-4 sm:pb-4">
+                            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
+                              <OrderProgress status={selected.status} compact />
+                              <PaymentProofViewer
+                                proofUrl={selected.proof_url}
+                                className="w-full lg:max-w-[11rem]"
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </GlassCard>
                 ) : (
                   <GlassCard className="flex items-center justify-center p-8">
@@ -277,18 +320,18 @@ export function MyOrdersPage() {
                   </GlassCard>
                 )}
 
-                <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden">
+                <div className="flex min-h-[280px] flex-col overflow-hidden sm:min-h-[320px] lg:min-h-0">
                   <OrderChat
                     key={selectedId}
                     orderId={selectedId}
                     viewerRole="customer"
                     customerUsername={profile?.username}
-                    title="Chat with Admin"
-                    className="h-full max-h-[min(28rem,calc(100dvh-14rem))] lg:max-h-none"
+                    title={`Chat with ${shopContact.chatSenderShort}`}
+                    className="h-full min-h-0"
                   />
                 </div>
 
-                <p className="text-caption flex shrink-0 items-center gap-2">
+                <p className="text-caption flex shrink-0 items-center gap-1.5 text-[10px] lg:text-[11px]">
                   <MessageCircle className="h-3.5 w-3.5" />
                   Admin usually replies within 15–60 minutes. Send account questions here.
                 </p>

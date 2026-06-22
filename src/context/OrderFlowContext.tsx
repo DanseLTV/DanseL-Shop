@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { OrderLoginPromptModal } from '../components/order/OrderLoginPromptModal'
+import { CartLoginPromptModal } from '../components/cart/CartLoginPromptModal'
 
 export interface PendingOrder {
   productId?: string
@@ -20,6 +21,8 @@ interface OrderFlowContextValue {
   startOrder: (pending?: PendingOrder) => void
   startCartCheckout: () => void
   closePrompt: () => void
+  promptCartSignIn: () => void
+  closeCartPrompt: () => void
 }
 
 const OrderFlowContext = createContext<OrderFlowContextValue | null>(null)
@@ -34,6 +37,7 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const [showPrompt, setShowPrompt] = useState(false)
   const [pending, setPending] = useState<PendingOrder | null>(null)
+  const [cartPromptOpen, setCartPromptOpen] = useState(false)
 
   const closePrompt = useCallback(() => {
     setShowPrompt(false)
@@ -74,6 +78,20 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
     setPending(null)
   }, [navigate, pending])
 
+  const closeCartPrompt = useCallback(() => {
+    setCartPromptOpen(false)
+  }, [])
+
+  const promptCartSignIn = useCallback(() => {
+    if (user) return
+    setCartPromptOpen(true)
+  }, [user])
+
+  const goToLoginFromCart = useCallback(() => {
+    setCartPromptOpen(false)
+    navigate(`/login?redirect=${encodeURIComponent('/shop')}`)
+  }, [navigate])
+
   const goToSignup = useCallback(() => {
     const orderPath = buildOrderPath(pending ?? undefined)
     setShowPrompt(false)
@@ -82,7 +100,9 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
   }, [navigate, pending])
 
   return (
-    <OrderFlowContext.Provider value={{ startOrder, startCartCheckout, closePrompt }}>
+    <OrderFlowContext.Provider
+      value={{ startOrder, startCartCheckout, closePrompt, promptCartSignIn, closeCartPrompt }}
+    >
       {children}
       <OrderLoginPromptModal
         open={showPrompt}
@@ -90,6 +110,11 @@ export function OrderFlowProvider({ children }: { children: ReactNode }) {
         onCancel={closePrompt}
         onLogin={goToLogin}
         onSignup={goToSignup}
+      />
+      <CartLoginPromptModal
+        open={cartPromptOpen}
+        onCancel={closeCartPrompt}
+        onLogin={goToLoginFromCart}
       />
     </OrderFlowContext.Provider>
   )

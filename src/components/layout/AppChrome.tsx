@@ -4,6 +4,7 @@ import { Footer } from './Footer'
 import { ScreenEdgeFire } from './ScreenEdgeFire'
 import { FloatingMessageButton } from './FloatingMessageButton'
 import { MobileBottomNav } from './MobileBottomNav'
+import { RoyalCustomerShell } from './RoyalCustomerShell'
 
 export function useIsCustomerShopChrome() {
   const { pathname } = useLocation()
@@ -67,8 +68,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 export function AppMain({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation()
   const isLanding = useIsLandingPage()
   const isAuth = useIsAuthPage()
+  const isAdmin = pathname.startsWith('/admin')
+  const useRoyalShell = !isLanding && !isAdmin
+
+  const content = useRoyalShell ? <RoyalCustomerShell>{children}</RoyalCustomerShell> : children
 
   return (
     <main
@@ -80,7 +86,7 @@ export function AppMain({ children }: { children: React.ReactNode }) {
             : 'relative z-10 flex flex-1 flex-col overflow-x-hidden'
       }
     >
-      {children}
+      {content}
     </main>
   )
 }

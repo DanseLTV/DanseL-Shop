@@ -5,7 +5,6 @@ import { useCart } from '../context/CartContext'
 import { useProducts } from '../hooks/useProducts'
 import { useCartCheckout } from '../hooks/useCartCheckout'
 import { formatPrice } from '../data/products'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { CustomerPageHeader } from '../components/layout/CustomerPageHeader'
 import { CartLineEditor } from '../components/cart/CartLineEditor'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -35,8 +34,6 @@ export function CartPage() {
 
   return (
     <div className="relative min-h-screen pt-20 pb-24 lg:pb-20">
-      <AnimatedBackground />
-
       <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <CustomerPageHeader
           backTo="/shop"

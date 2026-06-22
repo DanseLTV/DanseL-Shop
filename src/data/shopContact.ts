@@ -6,6 +6,9 @@
 
 export const shopContact = {
   shopName: 'DANSEL SHOP',
+  /** How admin/shop messages appear to customers in chat */
+  chatSenderLabel: 'Message from DanseL Shop',
+  chatSenderShort: 'DanseL Shop',
 
   email: 'danseltvshop@gmail.com',
 

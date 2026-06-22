@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, ChevronRight, LogIn, Inbox } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase, type OrderRecord, type UserRole } from '../../lib/supabase'
+import { shopContact } from '../../data/shopContact'
 
 interface Convo {
   order: OrderRecord
@@ -44,7 +45,6 @@ export function FloatingMessageButton() {
         .order('created_at', { ascending: false })
 
       const orders = (ordersData as OrderRecord[]) ?? []
-      const byId = new Map(orders.map((o) => [o.id, o]))
 
       const lastMsg: Record<string, { body: string; at: string; role: UserRole }> = {}
       if (orders.length > 0) {
@@ -86,25 +86,40 @@ export function FloatingMessageButton() {
       })
 
       list.sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime())
-      void byId
       setConvos(list)
     } finally {
       setFetching(false)
     }
   }, [user])
 
-  // Refresh when the popover opens.
   useEffect(() => {
     if (open && user) void load()
   }, [open, user, load])
 
-  // Background unread count for the badge.
   useEffect(() => {
     if (user) void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, load])
 
-  // Close on outside click / Escape.
+  useEffect(() => {
+    if (!user || !supabase) return
+
+    const client = supabase
+    const channel = client
+      .channel(`floating-messages-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_messages' },
+        () => {
+          void load()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [user, load])
+
   useEffect(() => {
     if (!open) return
     const onClick = (e: MouseEvent) => {
@@ -127,6 +142,7 @@ export function FloatingMessageButton() {
   if (location.pathname === '/login' || location.pathname === '/signup') return null
 
   const unreadCount = convos.filter((c) => c.unread).length
+  const hasUnread = unreadCount > 0
 
   const openConvo = (orderId: string) => {
     setOpen(false)
@@ -145,15 +161,23 @@ export function FloatingMessageButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="flex w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/12 bg-midnight-900/95 shadow-glass backdrop-blur-xl"
+            className="flex w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-amber-200/20 bg-[#0a0906]/95 shadow-[0_12px_48px_rgba(0,0,0,0.55),0_0_32px_rgba(255,196,90,0.08)] backdrop-blur-xl"
             role="dialog"
             aria-label="Messages"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-amber-200/10 bg-gradient-to-r from-amber-400/10 to-transparent px-4 py-3">
               <div className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-white" />
-                <span className="text-sm font-semibold text-white">Messages</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200/25 bg-amber-400/10">
+                  <MessageCircle className="h-4 w-4 text-amber-200" />
+                </span>
+                <div>
+                  <span className="block text-sm font-semibold text-white">Messages</span>
+                  {hasUnread && (
+                    <span className="text-[10px] font-medium text-amber-200/90">
+                      {unreadCount} new from {shopContact.chatSenderShort}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -165,18 +189,15 @@ export function FloatingMessageButton() {
               </button>
             </div>
 
-            {/* Body */}
             <div className="max-h-[22rem] scroll-y">
               {!user ? (
                 <div className="px-4 py-8 text-center">
-                  <Inbox className="mx-auto mb-3 h-8 w-8 text-white/30" />
-                  <p className="text-sm text-white/60">
-                    Sign in to view your order messages.
-                  </p>
+                  <Inbox className="mx-auto mb-3 h-8 w-8 text-amber-200/40" />
+                  <p className="text-sm text-white/60">Sign in to view your order messages.</p>
                   <Link
                     to="/login?redirect=%2Forders"
                     onClick={() => setOpen(false)}
-                    className="btn-glow mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm"
+                    className="btn-royal-gold mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm"
                   >
                     <LogIn className="h-4 w-4" />
                     Sign In
@@ -190,12 +211,12 @@ export function FloatingMessageButton() {
                 </div>
               ) : convos.length === 0 ? (
                 <div className="px-4 py-8 text-center">
-                  <Inbox className="mx-auto mb-3 h-8 w-8 text-white/30" />
+                  <Inbox className="mx-auto mb-3 h-8 w-8 text-amber-200/40" />
                   <p className="text-sm text-white/60">No orders yet.</p>
                   <Link
                     to="/shop"
                     onClick={() => setOpen(false)}
-                    className="btn-outline mt-4 inline-flex px-4 py-2 text-sm"
+                    className="btn-royal-gold-outline mt-4 inline-flex px-4 py-2 text-sm"
                   >
                     Browse the shop
                   </Link>
@@ -207,18 +228,20 @@ export function FloatingMessageButton() {
                       <button
                         type="button"
                         onClick={() => openConvo(c.order.id)}
-                        className="flex w-full items-start gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-white/5"
+                        className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-white/5 ${
+                          c.unread ? 'bg-amber-400/[0.06]' : ''
+                        }`}
                       >
-                        <span className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white">
+                        <span className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-200/20 bg-amber-400/10 text-xs font-bold text-amber-100">
                           {c.order.product_name?.[0]?.toUpperCase() ?? 'O'}
                           {c.unread && (
-                            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-white ring-2 ring-midnight-900" />
+                            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-300 ring-2 ring-[#0a0906]" />
                           )}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
                             <span
-                              className={`truncate text-sm ${c.unread ? 'font-semibold text-white' : 'font-medium text-white/85'}`}
+                              className={`truncate text-sm ${c.unread ? 'font-semibold text-amber-50' : 'font-medium text-white/85'}`}
                             >
                               {c.order.product_name}
                             </span>
@@ -227,7 +250,7 @@ export function FloatingMessageButton() {
                             </span>
                           </span>
                           <span
-                            className={`mt-0.5 block truncate text-xs ${c.unread ? 'text-white/80' : 'text-white/45'}`}
+                            className={`mt-0.5 block truncate text-xs ${c.unread ? 'text-amber-100/80' : 'text-white/45'}`}
                           >
                             {c.lastRole === 'customer' ? 'You: ' : ''}
                             {c.lastBody}
@@ -240,12 +263,11 @@ export function FloatingMessageButton() {
               )}
             </div>
 
-            {/* Footer — view full page */}
             {user && convos.length > 0 && (
               <Link
                 to="/orders"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center gap-1.5 border-t border-white/10 px-4 py-3 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                className="flex items-center justify-center gap-1.5 border-t border-amber-200/10 px-4 py-3 text-sm font-medium text-amber-200/90 transition-colors hover:bg-amber-400/5 hover:text-amber-100"
               >
                 View all messages
                 <ChevronRight className="h-4 w-4" />
@@ -255,18 +277,56 @@ export function FloatingMessageButton() {
         )}
       </AnimatePresence>
 
-      {/* Floating launcher */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-midnight-950 shadow-glow transition-transform hover:scale-105"
-        aria-label="Open messages"
+        className={`group relative inline-flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border-2 transition-all duration-300 hover:scale-[1.06] active:scale-95 ${
+          open
+            ? 'border-amber-200/70 bg-gradient-to-b from-[#fff8e7] via-[#f5e6b8] to-[#e8c96a] text-[#6b4a12] shadow-[0_0_28px_rgba(255,196,90,0.45),inset_0_2px_6px_rgba(255,255,255,0.65)]'
+            : hasUnread
+              ? 'border-white/50 bg-gradient-to-b from-[#ffe9a8] via-[#ffc45a] to-[#b8860b] text-[#1a1008] shadow-[0_0_40px_rgba(255,196,90,0.65),0_8px_28px_rgba(180,120,20,0.35),inset_0_1px_0_rgba(255,255,255,0.55)]'
+              : 'border-white/30 bg-gradient-to-b from-[#f5d78e] via-[#d4a84a] to-[#9a7020] text-[#1a1008] shadow-[0_4px_28px_rgba(255,196,90,0.42),inset_0_1px_0_rgba(255,255,255,0.4)] hover:border-white/45 hover:shadow-[0_6px_36px_rgba(255,196,90,0.55)]'
+        }`}
+        aria-label={
+          hasUnread
+            ? `Open messages, ${unreadCount} unread`
+            : open
+              ? 'Close messages'
+              : 'Open messages'
+        }
         aria-expanded={open ? 'true' : 'false'}
-        title="Messages"
+        title={hasUnread ? `${unreadCount} new message${unreadCount !== 1 ? 's' : ''}` : 'Messages'}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-        {!open && unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-midnight-950">
+        <span
+          className="pointer-events-none absolute inset-[5px] rounded-full bg-gradient-to-b from-white/35 to-transparent opacity-70"
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/20"
+          aria-hidden
+        />
+
+        {hasUnread && !open && (
+          <>
+            <span
+              className="pointer-events-none absolute -inset-1 animate-ping rounded-full border-2 border-amber-100/60"
+              aria-hidden
+            />
+            <span
+              className="pointer-events-none absolute -inset-2 rounded-full bg-amber-200/25 blur-md"
+              aria-hidden
+            />
+          </>
+        )}
+
+        {open ? (
+          <X className="relative h-[1.625rem] w-[1.625rem]" strokeWidth={2.25} />
+        ) : (
+          <MessageCircle className="relative h-[1.625rem] w-[1.625rem]" strokeWidth={hasUnread ? 2.35 : 2.1} />
+        )}
+
+        {!open && hasUnread && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-white bg-gradient-to-b from-[#ff6b4a] to-[#e03e2f] px-1 text-[10px] font-bold text-white shadow-[0_2px_10px_rgba(224,62,47,0.55)]">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

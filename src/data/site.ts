@@ -34,22 +34,26 @@ export const whyChooseUs = [
 export const orderSteps = [
   {
     step: '01',
-    title: 'Browse & Add to Cart',
-    description: 'Add one or many products to your cart, or use Buy now for a single item.',
+    title: 'Browse the shop',
+    description:
+      'Explore products and prices. Sign in first to use Add to Cart, or tap Buy on a product to checkout one item.',
   },
   {
     step: '02',
-    title: 'Sign In to Checkout',
-    description: 'Open your cart, sign in if needed, then proceed to checkout.',
+    title: 'Cart or buy now',
+    description:
+      'Review items in your cart and tap Proceed to checkout, or use Buy to skip the cart. Guests are prompted to sign in.',
   },
   {
     step: '03',
-    title: 'Pay & Upload Proof',
-    description: 'Pay via GCash or Maya, then upload your payment screenshot on the order page.',
+    title: 'Pay & upload proof',
+    description:
+      'Pay via GCash or Maya, then upload your payment screenshot on the checkout page. One proof covers all cart items.',
   },
   {
     step: '04',
-    title: 'Chat & Receive',
-    description: 'Open My Orders to chat with admin. Get your account details in the same thread once verified.',
+    title: 'Track & receive',
+    description:
+      'Open My Orders to track status and chat with DanseL Shop. Account details are sent in chat once verified.',
   },
 ]

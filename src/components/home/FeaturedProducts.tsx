@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { Product } from '../../types'
 import { useOrderNavigation } from '../../hooks/useOrderNavigation'
 import { useCart } from '../../context/CartContext'
+import { useGuardedAddToCart } from '../../hooks/useGuardedAddToCart'
 import { ScrollReveal } from '../ui/ScrollReveal'
 import { SectionHeading } from '../ui/SectionHeading'
 import { GradientButton } from '../ui/GradientButton'
@@ -14,7 +15,8 @@ export function FeaturedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [cartToast, setCartToast] = useState<string | null>(null)
   const goToOrder = useOrderNavigation()
-  const { addItem, getQuantity } = useCart()
+  const { getQuantity } = useCart()
+  const addToCart = useGuardedAddToCart()
   const { products } = useProducts()
   const featured = products.filter((p) => p.featured)
 
@@ -25,12 +27,12 @@ export function FeaturedProducts() {
 
   const handleAddToCart = useCallback(
     (product: Product) => {
-      if (product.availability === 'Out of Stock') return
-      addItem(product.id)
-      setCartToast(`${product.name} added to cart`)
-      setSelectedProduct(null)
+      if (addToCart(product)) {
+        setCartToast(`${product.name} added to cart`)
+        setSelectedProduct(null)
+      }
     },
-    [addItem]
+    [addToCart]
   )
 
   return (

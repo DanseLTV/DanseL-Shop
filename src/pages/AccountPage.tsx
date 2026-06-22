@@ -11,7 +11,6 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useLogoutConfirm } from '../hooks/useLogoutConfirm'
 import { LogoutConfirmModal } from '../components/auth/LogoutConfirmModal'
-import { AnimatedBackground } from '../components/ui/AnimatedBackground'
 import { ScrollReveal } from '../components/ui/ScrollReveal'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { GradientButton } from '../components/ui/GradientButton'
@@ -30,7 +29,6 @@ export function AccountPage() {
 
   return (
     <div className="relative min-h-screen pt-24">
-      <AnimatedBackground />
       <div className="relative mx-auto max-w-lg px-4 pb-24 sm:px-6">
         <BackNavLink to="/shop" label="Back to home" className="mb-5" />
 

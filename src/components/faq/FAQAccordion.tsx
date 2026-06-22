@@ -27,7 +27,7 @@ export function FAQAccordion({ items, limit }: FAQAccordionProps) {
               <motion.span
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
-                className="shrink-0 text-brand"
+                className="shrink-0 text-amber-200"
               >
                 <ChevronDown className="h-5 w-5" />
               </motion.span>

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { CART_STORAGE_KEY, MAX_CART_QUANTITY } from '../constants/cart'
+import { useAuth } from './AuthContext'
 
 export interface CartLine {
   productId: string
@@ -68,11 +69,27 @@ function writeStoredCart(items: CartLine[]) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
   const [items, setItems] = useState<CartLine[]>(() => readStoredCart())
 
   useEffect(() => {
+    if (loading) return
+    if (!user) {
+      setItems([])
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY)
+      } catch {
+        /* ignore */
+      }
+      return
+    }
+    setItems(readStoredCart())
+  }, [user, loading])
+
+  useEffect(() => {
+    if (loading || !user) return
     writeStoredCart(items)
-  }, [items])
+  }, [items, user, loading])
 
   const addItem = useCallback((productId: string, quantity = 1) => {
     const addQty = clampQuantity(quantity)
